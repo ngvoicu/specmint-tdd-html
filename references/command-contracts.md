@@ -45,7 +45,7 @@ This file defines functional contracts for `commands/*.md` and the universal
 3. Forge must not run in plan mode; if plan mode is active, require exit
    before continuing (Claude Code only — other tools proceed normally).
 4. If `.specs/assets/` does not exist, initialize it (copy `spec-styles.css`
-   and `spec-runtime.js` from the plugin's `examples/`).
+   and `spec-runtime.js` from the plugin's `assets/`).
 5. Create `.specs/<spec-id>/` directory before spawning the researcher or
    writing any research output.
 6. Output scope is `.specs/` artifacts only (`research-*.md`,
@@ -302,8 +302,8 @@ All commands and SKILL.md must use these standardized icons:
 6. `SKILL.md` is self-contained for standalone use (template references and
    researcher fallback documented).
 7. Status icons are consistent across all files (see Icon Standards above).
-8. `examples/SPEC.html` validates with `references/validate.md`.
-9. `examples/spec-styles.css` and `examples/spec-runtime.js` exist and are
-   referenced from `examples/SPEC.html`.
+8. `assets/spec-styles.css` and `assets/spec-runtime.js` exist and are
+   distributed to consumer projects' `.specs/assets/` on first forge.
+9. `references/html-template.html` validates with `references/validate.md`.
 10. `references/html-template.html` uses canonical JSON key order in
     `<script id="spec-meta">`.

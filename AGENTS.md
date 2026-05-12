@@ -18,8 +18,8 @@ For architectural context across the Mint family (core vs TDD, distribution, eva
   - `wireframe-library.md` / `mockup-library.md` — UI mockup pattern catalogs.
   - `testing-knowledge.md` — language-agnostic testing reference (frameworks, mocking, testcontainers, isolation, coverage, mutation testing across 6+ languages).
   - `command-contracts.md` — behavioral contracts including 20 TDD-specific contracts.
-- `examples/`:
-  - `SPEC.html` — ground-truth exemplar (rate-limit-middleware: 10 tasks, 5 TEST-IMPL pairs, 2 completed RGR cycles in the TDD Log).
+- `assets/`:
+  - `preview.png` — README screenshot of a real rendered `SPEC.html` (rate-limit-middleware: paired TEST-IMPL tasks, RGR swimlane TDD Log, Testing Architecture section).
   - `spec-styles.css` — shared design system (copied into `.specs/assets/` on first forge in any consuming project).
   - `spec-runtime.js` — progress deriver + Mermaid/Prism init + SVG annotation arrows + RGR-phase derivation.
 - `SKILL.md`: universal, cross-tool skill instructions (Codex, Cursor, Windsurf, Cline, Gemini CLI).
@@ -30,8 +30,8 @@ For architectural context across the Mint family (core vs TDD, distribution, eva
 
 - `rg --files`: fast inventory of repository files before editing.
 - `sed -n '1,160p' commands/forge.md`: inspect command content in the terminal.
-- `python3 -m http.server 8000` (run inside `examples/`): serve the exemplar at <http://localhost:8000/SPEC.html> to eyeball visual changes — especially the TDD swimlane log and TEST-IMPL pair cards.
-- `python3 -c "import re,json; h=open('examples/SPEC.html').read(); m=re.search(r'<script[^>]*id=\"spec-meta\"[^>]*>(.+?)</script>',h,re.S); json.loads(m.group(1)); o=re.findall(r'<!--\\s*region:([\\w-]+)\\s*-->',h); c=re.findall(r'<!--\\s*endregion:([\\w-]+)\\s*-->',h); assert sorted(o)==sorted(c); print('OK')"`: validate exemplar (full recipe in `references/validate.md`).
+- `python3 -m http.server 8000` (run inside a consumer project's `.specs/<id>/`): serve a real generated `SPEC.html` at <http://localhost:8000/SPEC.html> to eyeball visual changes — especially the TDD swimlane log and TEST-IMPL pair cards. The README screenshot at `assets/preview.png` is the reference render.
+- `python3 -c "import re,json,sys; p=sys.argv[1]; h=open(p).read(); m=re.search(r'<script[^>]*id=\"spec-meta\"[^>]*>(.+?)</script>',h,re.S); json.loads(m.group(1)); o=re.findall(r'<!--\\s*region:([\\w-]+)\\s*-->',h); c=re.findall(r'<!--\\s*endregion:([\\w-]+)\\s*-->',h); assert sorted(o)==sorted(c); print('OK')" path/to/SPEC.html`: validate a generated SPEC.html (full recipe in `references/validate.md`).
 - `npx skills add ngvoicu/specmint-tdd-html -a codex`: smoke-test universal-skill installation flow.
 - `git log --oneline -n 10`: review recent commit style before committing.
 
@@ -66,10 +66,10 @@ This repository has no compile/build pipeline; Markdown, JSON, HTML, CSS, and JS
 
 - No automated test suite currently exists in this repository.
 - Perform manual validation for each change:
-  - Run the validate recipe on `examples/SPEC.html` after any format change.
+  - Run the validate recipe on a generated `.specs/<id>/SPEC.html` after any format change.
   - Verify `.claude-plugin/*.json` and `.cursor-plugin/*.json` stay valid JSON.
   - Confirm referenced paths/files exist.
-  - Open `examples/SPEC.html` in a browser after any visual change — pay special attention to the TDD swimlane and TEST-IMPL pair card rendering.
+  - Dogfood the plugin in a disposable consumer project after any visual change and open the generated `SPEC.html` in a browser — pay special attention to the TDD swimlane and TEST-IMPL pair card rendering.
   - Smoke-test install/use flow in a disposable project (with a real test runner available so the implement RGR gates can fire).
 - If you change spec-format rules, update `SKILL.md`, `references/spec-format.md`, and `references/edit-recipes.md` in the same PR.
 - Eval workspace at `specmint-tdd-html-workspace/`: 8 placeholder evals (forge-tdd-html, red-green-refactor, blocking-rule, tests-are-sacred, tdd-log, resume-tdd, asset-init, interleaved-tasks) — assertion bodies are TODO, not yet runnable.

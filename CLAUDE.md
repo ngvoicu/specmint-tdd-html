@@ -30,14 +30,14 @@ Topics relevant to this repo: specmint-tdd-html overview, TDD invariants, distri
 
 The plugin has two conceptual layers:
 
-**Plugin layer** (this repo) — `commands/*.md` (one file per slash command), `agents/researcher.md` (Opus-model deep research subagent including test infrastructure analysis), `.claude-plugin/` and `.cursor-plugin/` (metadata), `references/*` (format reference + edit recipes + validator + testing-knowledge + mockup libraries), `examples/*` (the canonical SPEC.html + shared `spec-styles.css` + `spec-runtime.js`).
+**Plugin layer** (this repo) — `commands/*.md` (one file per slash command), `agents/researcher.md` (Opus-model deep research subagent including test infrastructure analysis), `.claude-plugin/` and `.cursor-plugin/` (metadata), `references/*` (format reference + edit recipes + validator + testing-knowledge + mockup libraries), `assets/*` (shared `spec-styles.css` + `spec-runtime.js` copied into consuming projects, plus the README `preview.png`).
 
 **Data layer** (consuming project) — `.specs/` directory created in the consuming project root (not here). Layout:
 
 ```
 .specs/
 ├── assets/
-│   ├── spec-styles.css    # Shared design system — copied once from plugin's examples/
+│   ├── spec-styles.css    # Shared design system — copied once from plugin's assets/
 │   └── spec-runtime.js    # Progress deriver + Mermaid/Prism init + SVG annotation arrows
 │                          # + RGR-phase derivation (TDD-specific)
 ├── registry.md            # Markdown table — denormalized index across specs
@@ -70,7 +70,7 @@ The plugin has two conceptual layers:
 |----------------|------------|
 | `references/spec-format.md` | Spec format rules in `SKILL.md` |
 | `references/testing-knowledge.md` | Testing guidance in `SKILL.md` and `agents/researcher.md` |
-| `examples/SPEC.html` + `spec-styles.css` + `spec-runtime.js` | `references/html-template.html` and `references/edit-recipes.md` |
+| `assets/spec-styles.css` + `assets/spec-runtime.js` | `references/html-template.html` and `references/edit-recipes.md` |
 | `commands/*.md` | Behavioral contracts in `references/command-contracts.md` |
 
 `skills/specmint-tdd-html/SKILL.md` is a symlink to `../../SKILL.md` — never replace it with a real file.
@@ -93,8 +93,8 @@ The plugin has two conceptual layers:
 - Edit `references/testing-knowledge.md` to update testing framework / tooling guidance.
 
 ### Format changes
-- Edit `examples/spec-styles.css` / `spec-runtime.js` / `SPEC.html` to change the rendered visual / runtime behavior. After any visual change, open `examples/SPEC.html` in a browser — or serve via `python3 -m http.server` in `examples/` to view at <http://localhost:8000/SPEC.html>.
-- After any spec-format change, run the validate recipe on `examples/SPEC.html` (see `references/validate.md`).
+- Edit `assets/spec-styles.css` / `assets/spec-runtime.js` to change rendered visual / runtime behavior for every generated `SPEC.html`. To eyeball changes, dogfood the plugin in a disposable consumer project — `claude plugin add /path/to/specmint-tdd-html`, run `/forge`, then open the generated `.specs/<id>/SPEC.html`. The README screenshot at `assets/preview.png` is the reference render.
+- After any spec-format change, run the validate recipe on a generated `SPEC.html` (see `references/validate.md`).
 
 ### Plumbing
 - Validate `.claude-plugin/*.json` and `.cursor-plugin/*.json` stay valid JSON after edits.

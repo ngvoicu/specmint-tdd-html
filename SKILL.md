@@ -451,8 +451,8 @@ Other tools: proceed normally.
 3. Initialize directories: `mkdir -p .specs/<id> .specs/assets`
 4. **Initialize shared assets if missing.** If `.specs/assets/spec-styles.css`
    and `.specs/assets/spec-runtime.js` don't already exist, copy them from
-   the plugin's bundled `examples/` directory. For Claude Code plugins this
-   is typically `~/.claude/plugins/specmint-tdd-html/examples/`.
+   the plugin's bundled `assets/` directory. For Claude Code plugins this
+   is typically `~/.claude/plugins/specmint-tdd-html/assets/`.
 5. If `.specs/registry.md` doesn't exist, initialize it with the header row.
 
 ### Step 2: Deep Research

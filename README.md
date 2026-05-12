@@ -6,6 +6,8 @@ Spec Mint TDD HTML enforces strict TDD in AI coding workflows. Every task starts
 
 Works with Claude Code (as a plugin), Codex, Cursor, Windsurf, Cline, Gemini CLI, and any AI coding tool that can read files.
 
+![Spec preview — Rate Limit Middleware (TDD)](assets/preview.png)
+
 ## The Problem
 
 Every AI coding tool has some version of "plan mode" — think before you code. But these plans are ephemeral and they don't enforce testing discipline. There's no way to:
@@ -59,7 +61,7 @@ Specs live in `.specs/` at your project root. Each spec is a single `SPEC.html` 
 
 ### A SPEC.html Looks Like This (Sketch)
 
-Open `examples/SPEC.html` in a browser to see the rate-limit-middleware TDD exemplar render — paired TEST-IMPL task cards, RGR swimlane TDD Log, Testing Architecture section, derived "Current TDD phase" scorecard. Below is a snippet of the HTML structure:
+The screenshot above is a real `SPEC.html` rendered in a browser — paired TEST-IMPL task cards, RGR swimlane TDD Log, Testing Architecture section, derived "Current TDD phase" scorecard. Below is a snippet of the HTML structure:
 
 ```html
 <!-- Metadata blob (single-line JSON, canonical key order) -->
@@ -444,8 +446,8 @@ specmint-tdd-html/
 │   ├── mockup-library.md           # Hi-fi mockup patterns (.ui-*)
 │   ├── testing-knowledge.md        # Language-agnostic testing reference (6+ languages)
 │   └── command-contracts.md        # Behavioral contracts (20 TDD-specific)
-├── examples/
-│   ├── SPEC.html                   # Rate-limit-middleware TDD exemplar (paired tasks + RGR swimlane log)
+├── assets/
+│   ├── preview.png                 # README screenshot of a rendered SPEC.html
 │   ├── spec-styles.css             # Shared design system — copied to .specs/assets/ on first forge
 │   └── spec-runtime.js             # Progress deriver + Mermaid/Prism init + RGR-phase derivation
 ├── specmint-tdd-html-workspace/    # Eval scaffold (gitignored)
