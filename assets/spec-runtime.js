@@ -154,10 +154,96 @@
     if (!document.querySelector('pre.mermaid')) return;
     try {
       const mod = await import('https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs');
-      mod.default.initialize({ startOnLoad: true, theme: 'neutral', securityLevel: 'loose' });
+      mod.default.initialize({ startOnLoad: false, theme: 'neutral', securityLevel: 'loose' });
+      // Runtime loads with `defer`, so DOMContentLoaded has already fired by the
+      // time we get here — `startOnLoad` would never trigger. Call `run` directly.
+      await mod.default.run({ querySelector: 'pre.mermaid' });
+      mountDiagramModal();
     } catch (e) {
       console.warn('[specmint] Mermaid failed to load — diagram source remains readable as text.', e);
     }
+  }
+
+  // ---------------------------------------------------------------------------
+  // mountDiagramModal — click a figure.diagram to open it in a fullscreen
+  // dialog with wheel-zoom + click-drag pan. Called from mountMermaid after
+  // SVGs exist; if there are no diagrams it is a no-op.
+  // ---------------------------------------------------------------------------
+
+  function mountDiagramModal() {
+    const diagrams = document.querySelectorAll('figure.diagram');
+    if (!diagrams.length) return;
+
+    const dialog = document.createElement('dialog');
+    dialog.className = 'diagram-modal';
+    dialog.innerHTML =
+      '<button type="button" class="diagram-modal__close" aria-label="Close (Esc)">×</button>' +
+      '<div class="diagram-modal__hint">Wheel = zoom · Drag = pan · Double-click = reset · Esc = close</div>' +
+      '<div class="diagram-modal__viewport"><div class="diagram-modal__pan"></div></div>';
+    document.body.appendChild(dialog);
+
+    const viewport = dialog.querySelector('.diagram-modal__viewport');
+    const pan = dialog.querySelector('.diagram-modal__pan');
+    const closeBtn = dialog.querySelector('.diagram-modal__close');
+
+    let scale = 1, tx = 0, ty = 0;
+    let dragging = false, startX = 0, startY = 0, startTx = 0, startTy = 0;
+
+    function applyTransform() {
+      pan.style.transform = `translate(${tx}px, ${ty}px) scale(${scale})`;
+    }
+    function fit() { scale = 1; tx = 0; ty = 0; applyTransform(); }
+
+    diagrams.forEach((fig) => {
+      fig.addEventListener('click', () => {
+        const svg = fig.querySelector('svg');
+        if (!svg) return;
+        const clone = svg.cloneNode(true);
+        clone.removeAttribute('width');
+        clone.removeAttribute('height');
+        clone.removeAttribute('style');
+        clone.style.width = '100%';
+        clone.style.height = '100%';
+        pan.replaceChildren(clone);
+        fit();
+        dialog.showModal();
+      });
+    });
+
+    closeBtn.addEventListener('click', () => dialog.close());
+    dialog.addEventListener('click', (e) => { if (e.target === dialog) dialog.close(); });
+    dialog.addEventListener('close', () => pan.replaceChildren());
+
+    viewport.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      const rect = viewport.getBoundingClientRect();
+      const px = e.clientX - rect.left;
+      const py = e.clientY - rect.top;
+      const factor = Math.pow(1.15, -Math.sign(e.deltaY));
+      const newScale = Math.max(0.2, Math.min(10, scale * factor));
+      tx = px - (px - tx) * (newScale / scale);
+      ty = py - (py - ty) * (newScale / scale);
+      scale = newScale;
+      applyTransform();
+    }, { passive: false });
+
+    viewport.addEventListener('pointerdown', (e) => {
+      dragging = true;
+      startX = e.clientX; startY = e.clientY;
+      startTx = tx; startTy = ty;
+      viewport.setPointerCapture(e.pointerId);
+    });
+    viewport.addEventListener('pointermove', (e) => {
+      if (!dragging) return;
+      tx = startTx + (e.clientX - startX);
+      ty = startTy + (e.clientY - startY);
+      applyTransform();
+    });
+    viewport.addEventListener('pointerup', (e) => {
+      dragging = false;
+      if (viewport.hasPointerCapture(e.pointerId)) viewport.releasePointerCapture(e.pointerId);
+    });
+    viewport.addEventListener('dblclick', fit);
   }
 
   // ---------------------------------------------------------------------------
