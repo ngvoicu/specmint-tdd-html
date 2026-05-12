@@ -36,6 +36,9 @@ and the user's preference for tracked vs local-only spec state.
    - Shared assets: `.specs/assets/spec-styles.css` + `.specs/assets/spec-runtime.js`
    - Per-spec files: `.specs/<id>/SPEC.html`, `.specs/<id>/research-*.md`,
      `.specs/<id>/interview-*.md`
+   - Optional scratch: `.specs/<id>/artifacts/` — any AI-tool transient
+     files (test-run logs, attempt dumps, debug traces). Never authoritative.
+     Don't write scratch files anywhere else under `.specs/<id>/`.
 3. **Authority rule**: The `<script id="spec-meta">` JSON inside `SPEC.html`
    is authoritative for identity. `data-status` attributes on tasks /
    phases / acceptance criteria are authoritative for lifecycle. The
@@ -68,7 +71,8 @@ and spec writing.
 
 This plugin only manages `.html` specs. If `.specs/<id>/SPEC.md` files exist
 (from a markdown-flavored Spec Mint variant), they are not visible to or
-operated on by this plugin. No auto-conversion, no edits.
+operated on by this plugin. No auto-conversion, no edits. **The user should
+use the markdown-flavored variant for those specs.**
 
 ## Session Start
 
@@ -86,6 +90,7 @@ instead of reading files. Otherwise, fall back to reading files manually:
 | Situation | Required behavior |
 |-----------|-------------------|
 | `.specs/registry.md` missing | If `.specs/` exists, report "No registry yet" and offer to initialize it. If `.specs/` is missing, report "No specs yet" and continue normally. |
+| `.specs/assets/` missing or stale when a SPEC.html is being written | Refresh it — copy `spec-styles.css` and `spec-runtime.js` from the plugin's `assets/` directory into `.specs/assets/`, **overwriting any existing files**. The runtime ships rendering fixes (Mermaid, diagram fullscreen modal, code highlighting, RGR-phase derivation) and must stay in sync with the plugin version. |
 | Malformed registry row | Skip malformed row, emit warning with row text, continue parsing remaining rows. |
 | Multiple `active` rows | Warn user. Pick the row with the newest `Updated` date (or first active row if dates are unavailable) for this run. On next write, normalize to a single active spec. |
 | Registry row exists but `.specs/<id>/SPEC.html` missing | Warn and continue. Keep row visible in list/status with `(SPEC.html missing)`. |
@@ -411,7 +416,7 @@ testing reference is in `references/testing-knowledge.md`.
   in-progress IMPL task's `data-tdd-phase`, or (if no task is in-progress)
   from the type of the first pending task (TEST → RED, IMPL → GREEN).
 - Every top-level section is wrapped in `<!-- region:NAME -->` /
-  `<!-- endregion:NAME -->` sentinels. TDD specs have 13 canonical regions:
+  `<!-- endregion:NAME -->` sentinels. TDD specs have 14 canonical regions:
   meta, toc, header, overview, acceptance, architecture, **testing**,
   libraries, phases, code, mockups (optional), decisions, **tdd-log**,
   deviations.
@@ -648,15 +653,23 @@ If the session is ending:
 ```
 .specs/
 ├── assets/
-│   ├── spec-styles.css       # Shared design system (written once)
-│   └── spec-runtime.js       # Shared runtime (written once)
+│   ├── spec-styles.css       # Shared design system (refreshed every forge)
+│   └── spec-runtime.js       # Shared runtime (refreshed every forge)
 ├── registry.md               # Markdown table — denormalized index
 └── <spec-id>/
     ├── SPEC.html             # The spec document
     ├── research-01.md        # Deep research findings (markdown)
     ├── interview-01.md       # Interview notes (markdown)
+    ├── artifacts/            # Optional: AI-tool scratch (test logs,
+    │                         #   attempt dumps). Never authoritative.
     └── ...
 ```
+
+`.specs/<spec-id>/artifacts/` is optional: only create it when the AI tool
+needs to persist scratch (e.g., test-run logs it can't keep in conversation
+memory). Most runs have no artifacts. The directory is never read back as
+authoritative state — the spec's TDD Log section, Decision Log, and
+research-/interview notes are the durable record.
 
 ## Registry Format
 
@@ -683,12 +696,11 @@ Use these concise formats consistently:
 ```
 Resuming: <Title> (<id>)
 Progress: <done>/<total> tasks
+RGR cycles: <done>/<total>
 Phase: <phase name>
-Current: <task text>
+Current: [<TEST|IMPL>-<PREFIX>-<NN>] <task text>
 TDD Phase: RED | GREEN | REFACTOR
-Failing Tests: <count and names>
-Last Test Run: <result>
-Context: <one to three lines from Resume Context>
+Last cycle: [<TASK-CODE>] <state> — <test result>
 ```
 
 **List**
@@ -709,13 +721,6 @@ Phase <n>: <name> [<marker>]
 Progress: <done>/<total> (<pct>%)
 Current: <task text or none>
 ```
-
-## Completing a Spec
-
-1. Verify all tasks are checked (warn if not, but allow override)
-2. Set status to `completed` in `<script id="spec-meta">` JSON and registry
-3. Update the `updated` date in both
-4. Suggest next spec to activate if any are paused
 
 ## Archiving a Spec
 

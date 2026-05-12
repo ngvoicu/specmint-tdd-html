@@ -11,16 +11,20 @@ Every project that uses this plugin has a `.specs/` directory at the project roo
 ```
 .specs/
 ├── assets/
-│   ├── spec-styles.css        # Written once on first forge
-│   └── spec-runtime.js        # Written once on first forge
+│   ├── spec-styles.css        # Refreshed on every forge
+│   └── spec-runtime.js        # Refreshed on every forge
 ├── registry.md                # Markdown table — denormalized spec index
 └── <spec-id>/
     ├── SPEC.html              # The spec
     ├── research-01.md         # Research notes (markdown)
-    └── interview-01.md        # Interview notes (markdown)
+    ├── interview-01.md        # Interview notes (markdown)
+    └── artifacts/             # Optional: AI-tool scratch (test logs,
+                               #   attempt dumps). Never authoritative.
 ```
 
-The `.specs/assets/` directory is shared by every spec. AI does not author or edit these files after initial install — they are the design system.
+The `.specs/assets/` directory is shared by every spec. AI never hand-edits these — they are the design system, copied from the plugin's `assets/` on every forge so existing projects pick up runtime fixes.
+
+The per-spec `artifacts/` subdirectory is **optional**: only create it when the AI tool needs to persist scratch files (e.g., test-run logs the tool can't carry across turns in memory). Files inside `artifacts/` are never read back as authoritative — the spec's TDD Log section, Decision Log, and research-/interview notes are the durable record. Don't write scratch files anywhere else under `.specs/<id>/`.
 
 ## Source-of-truth split
 
@@ -35,7 +39,7 @@ The `.specs/assets/` directory is shared by every spec. AI does not author or ed
 
 ## Region sentinels
 
-13 canonical region names: `meta`, `toc`, `header`, `overview`, `acceptance`, `architecture`, `testing`, `libraries`, `phases`, `code`, `mockups`, `decisions`, `tdd-log`, `deviations`. (The TDD variant adds `testing` and `tdd-log` to the 11 core regions; `mockups` is omitted when `mockup-fidelity` is `none`.)
+14 canonical region names: `meta`, `toc`, `header`, `overview`, `acceptance`, `architecture`, `testing`, `libraries`, `phases`, `code`, `mockups` (optional), `decisions`, `tdd-log`, `deviations`. (The TDD variant adds `testing` and `tdd-log` to the 12 core regions; `mockups` is omitted when `mockup-fidelity` is `none`.)
 
 ## TDD-specific section structure
 
