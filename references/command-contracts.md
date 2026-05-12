@@ -44,8 +44,10 @@ This file defines functional contracts for `commands/*.md` and the universal
    `.specs/<id>/SPEC.html` and registry).
 3. Forge must not run in plan mode; if plan mode is active, require exit
    before continuing (Claude Code only — other tools proceed normally).
-4. If `.specs/assets/` does not exist, initialize it (copy `spec-styles.css`
-   and `spec-runtime.js` from the plugin's `assets/`).
+4. Refresh `.specs/assets/` on every forge: copy `spec-styles.css` and
+   `spec-runtime.js` from the plugin's `assets/`, **overwriting any
+   existing files**. The runtime is plugin-managed; overwrite-on-forge
+   ensures existing projects pick up rendering fixes.
 5. Create `.specs/<spec-id>/` directory before spawning the researcher or
    writing any research output.
 6. Output scope is `.specs/` artifacts only (`research-*.md`,

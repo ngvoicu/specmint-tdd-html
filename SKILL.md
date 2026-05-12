@@ -389,8 +389,10 @@ testing reference is in `references/testing-knowledge.md`.
 **Key facts about the format:**
 
 - Each `SPEC.html` references `../assets/spec-styles.css` and
-  `../assets/spec-runtime.js`. Those two files are written once per project
-  on first forge and are shared by every spec.
+  `../assets/spec-runtime.js`. Those two files are shared by every spec
+  in the project and are refreshed from the plugin's `assets/` on every
+  forge (overwrite, not skip-if-present) so existing projects pick up
+  runtime fixes.
 - Identity (`id`, `title`, `status`, `created`, `updated`, `priority`,
   `tags`, `mockup-fidelity`) lives in `<script type="application/json"
   id="spec-meta">` in `<head>`, single-line JSON, canonical key order
@@ -449,10 +451,14 @@ Other tools: proceed normally.
    - **Archive** the old spec and create a new one in its place
    Do not proceed until the user chooses.
 3. Initialize directories: `mkdir -p .specs/<id> .specs/assets`
-4. **Initialize shared assets if missing.** If `.specs/assets/spec-styles.css`
-   and `.specs/assets/spec-runtime.js` don't already exist, copy them from
-   the plugin's bundled `assets/` directory. For Claude Code plugins this
-   is typically `~/.claude/plugins/specmint-tdd-html/assets/`.
+4. **Refresh shared assets.** Copy `spec-styles.css` and `spec-runtime.js`
+   from the plugin's bundled `assets/` directory into `.specs/assets/`,
+   **overwriting any existing files**. The runtime is plugin-managed and
+   never hand-edited — it ships rendering fixes (Mermaid initialization,
+   click-to-fullscreen diagram modal with wheel-zoom + drag-pan, PrismJS
+   code highlighting, RGR-phase derivation) that must stay in sync with
+   the plugin version. For Claude Code plugins this is typically
+   `~/.claude/plugins/specmint-tdd-html/assets/`.
 5. If `.specs/registry.md` doesn't exist, initialize it with the header row.
 
 ### Step 2: Deep Research

@@ -52,12 +52,15 @@ Before starting research, ensure the directory structure exists:
    ```
    mkdir -p .specs/<spec-id> .specs/assets
    ```
-3. **Initialize the shared assets if missing.** If
-   `.specs/assets/spec-styles.css` and `.specs/assets/spec-runtime.js`
-   don't already exist, copy them from the plugin's bundled `assets/`
-   directory. For Claude Code plugins this is typically
-   `~/.claude/plugins/specmint-tdd-html/assets/`. These files are
-   written once per project and shared by every spec.
+3. **Refresh the shared assets.** Copy `spec-styles.css` and
+   `spec-runtime.js` from the plugin's bundled `assets/` directory into
+   `.specs/assets/`, **overwriting any existing files**. The runtime is
+   plugin-managed and never hand-edited; overwriting on every forge
+   ensures existing projects pick up rendering fixes (Mermaid
+   initialization, click-to-fullscreen diagram modal, code highlighting,
+   RGR-phase derivation). For Claude Code plugins the source path is
+   typically `~/.claude/plugins/specmint-tdd-html/assets/`. These files
+   are shared by every spec in the project.
 4. If `.specs/registry.md` doesn't exist, initialize it with the header row.
 
 If directory creation fails because the environment is still read-only, ask
