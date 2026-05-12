@@ -61,40 +61,18 @@ Specs live in `.specs/` at your project root. Each spec is a single `SPEC.html` 
 
 ### A SPEC.html Looks Like This (Sketch)
 
-The screenshot above is a real `SPEC.html` rendered in a browser — paired TEST-IMPL task cards, RGR swimlane TDD Log, Testing Architecture section, derived "Current TDD phase" scorecard. Below is a snippet of the HTML structure:
+The screenshot above is a real `SPEC.html` rendered in a browser. The structure at a glance:
 
-```html
-<!-- Metadata blob (single-line JSON, canonical key order) -->
-<script type="application/json" id="spec-meta">{"id":"rate-limit-middleware","title":"Rate Limit Middleware","status":"active","created":"2026-05-10","updated":"2026-05-12","priority":"high","tags":["api","security"],"mockup-fidelity":"none"}</script>
-
-<!-- TEST-IMPL pair: one data-status swap per task; data-tdd-phase carries RGR state -->
-<li class="task-pair">
-  <ol class="task-list">
-    <li class="task task--test" id="task-TEST-RL-01" data-task="TEST-RL-01" data-status="completed">
-      <span class="task__code">TEST-RL-01</span>
-      <span class="task__text">Write tests for refill()</span>
-      <span class="task__rgr task__rgr--red">RED</span>
-    </li>
-    <li class="task task--impl" id="task-IMPL-RL-02" data-task="IMPL-RL-02" data-status="completed" data-tdd-phase="refactor">
-      <span class="task__code">IMPL-RL-02</span>
-      <span class="task__text">Implement refill() → satisfies <code>[TEST-RL-01]</code></span>
-      <span class="task__rgr task__rgr--green">GREEN</span>
-    </li>
-  </ol>
-</li>
-
-<!-- A completed RGR cycle in the TDD Log -->
-<article class="tdd-cycle">
-  <header class="tdd-cycle__header"><code>[TEST-RL-01]</code> → <code>[IMPL-RL-02]</code> · <strong>refill()</strong></header>
-  <div class="tdd-lanes">
-    <div class="lane lane--red"><pre>vitest run tests/bucket.test.ts
-3 tests fail: Cannot find module './bucket'</pre></div>
-    <div class="lane lane--green"><pre>vitest run tests/bucket.test.ts
-3 passed, 0 failed</pre></div>
-    <div class="lane lane--refactor"><p>Extracted capacity clamp into a named constant.</p></div>
-  </div>
-</article>
-```
+- **Header card**: title, status pill, priority chip, created/updated dates, tags, scorecard (Tasks / RGR Cycles / Acceptance / Current TDD phase)
+- **Overview** + **Acceptance Criteria** with custom-styled checkboxes
+- **Architecture**: one or more `<pre class="mermaid">` blocks rendered as diagrams (flowcharts, sequence, state, ER)
+- **Testing Architecture**: framework & tools, isolation strategy, coverage targets, test commands, anti-patterns
+- **Library Choices**: clean table with versions, alternatives, rationale
+- **Phases & Tasks**: each phase a collapsible `<details>` with status border; tasks alternate TEST (red left border) / IMPL (green left border) as paired `task-pair` cards with `→ satisfies [TEST-XX-NN]` cross-refs
+- **Code Previews**: `<figure class="code-diff">` blocks with red/green syntax-highlighted diffs (PrismJS `diff-highlight`)
+- **Decision Log**: styled table
+- **TDD Log**: one `<article class="tdd-cycle">` per completed cycle, 3 lanes (RED / GREEN / REFACTOR) with monospace test output
+- **Deviations**: styled table
 
 The plugin ships a canonical empty template at `references/html-template.html`, edit recipes for every common operation (including `data-tdd-phase` swaps and appending TDD Log entries) at `references/edit-recipes.md`, plus mockup pattern libraries (`wireframe-library.md` + `mockup-library.md`).
 
