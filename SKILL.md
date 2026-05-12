@@ -600,8 +600,39 @@ The spec must include:
   on phase names. Every phase contains alternating TEST-IMPL tasks.
 - **Tasks** with `[TEST-PREFIX-NN]` and `[IMPL-PREFIX-NN]` codes; IMPL tasks
   include `→ satisfies [TEST-XX-NN]` reference
-- **Code Previews** (optional) — `<figure class="code-diff">` with PrismJS
-  `language-diff-LANG diff-highlight`
+- **Code Previews** — `<figure class="code-diff">` blocks with PrismJS
+  `language-diff-LANG diff-highlight` showing the meaningful code
+  deltas. **Expected on every feature spec.** Skip only when the spec
+  genuinely produces no code (pure research / docs).
+
+  **Include one canonical figure per category** (not every instance):
+  - The signature/contract of each new public interface, exported
+    function, class, or API endpoint
+  - The shape of each new data model, schema, or migration
+  - Non-trivial business logic (algorithm, validation, transformation)
+    where the body itself matters
+  - The "before → after" of each refactor or significant signature
+    change that captures a design decision
+  - One canonical test per new test pattern — the shape, not every
+    test body (the full body lives in the TEST task itself during
+    `/implement`, not in the forged spec)
+
+  **Skip:** boilerplate (imports, scaffolding, route registration
+  already implied by phases); repeated identical patterns (show one,
+  note the rest follow); codegen output / formatted JSON / build
+  artifacts; the full test bodies that will be written during
+  RED phases.
+
+  **Sizing.** Small spec (1-2 phases, one module): 2-4 previews.
+  Medium (3-5 phases): 4-8. Large (6+ phases across API + DB + UI):
+  8-15. (TDD specs run slightly leaner than core because the TEST-IMPL
+  task list and Testing Architecture section carry some of the
+  "what changes" weight.) If a spec produces hundreds of changes but
+  only has 1-2 previews, you missed the point — surface the most
+  important deltas.
+
+  Unified diff by default; `data-view="split"` for changes >30 lines,
+  multi-hunk, or where the before/after comparison itself is the point.
 - **UI Mockups** (omit entirely if `mockup-fidelity: none`) — wireframe or
   hi-fi per the chosen fidelity
 - **Decision Log** — initially populated with key decisions from interviews

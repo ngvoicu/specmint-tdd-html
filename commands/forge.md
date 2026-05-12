@@ -362,8 +362,32 @@ The spec must include:
    TEST-AUTH-03, IMPL-AUTH-04...). See `references/edit-recipes.md` for the
    exact HTML structure.
 
-10. **Code Previews** (optional): `<figure class="code-diff">` blocks for
-    illustrative changes (e.g., the test file structure, a migration SQL).
+10. **Code Previews**: `<figure class="code-diff">` blocks with PrismJS
+    `language-diff-LANG diff-highlight`. **Expected on every feature
+    spec** (only skip for pure research / docs specs). Include **one
+    canonical figure per category** — not every instance:
+    - The signature/contract of each new public interface, exported
+      function, class, or API endpoint
+    - The shape of each new data model, schema, or migration
+    - Non-trivial business logic where the body itself matters
+    - The "before → after" of each refactor or significant signature
+      change that captures a design decision
+    - One canonical test per new test pattern (the shape, not every
+      test body — full bodies live in TEST tasks during /implement)
+
+    Skip boilerplate, repeated identical patterns (show one, note the
+    rest follow), codegen output / formatted JSON / build artifacts,
+    and the full test bodies that will be written during RED phases.
+
+    Sizing: small spec (1-2 phases) → 2-4 previews; medium (3-5
+    phases) → 4-8; large (6+ phases across API + DB + UI) → 8-15.
+    TDD specs run slightly leaner than core because the TEST-IMPL
+    task list and Testing Architecture section carry some of the
+    weight. A spec that produces many changes but ships only 1-2
+    previews has missed the point — surface the most important deltas.
+
+    Unified diff by default; `data-view="split"` for changes >30 lines,
+    multi-hunk, or where the before/after comparison itself is the point.
 11. **UI Mockups**: One or more `<figure class="mockup">` blocks per the
     chosen `mockup-fidelity`. Omit the entire section if fidelity is `none`.
 12. **TDD Log**: Empty region — filled during implementation as cycles
