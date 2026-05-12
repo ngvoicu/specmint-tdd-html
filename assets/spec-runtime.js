@@ -151,17 +151,45 @@
   // ---------------------------------------------------------------------------
 
   async function mountMermaid() {
-    if (!document.querySelector('pre.mermaid')) return;
+    const nodes = document.querySelectorAll('pre.mermaid');
+    if (!nodes.length) return;
+
+    // Stash original Mermaid source on each node BEFORE render — Mermaid v11
+    // replaces the pre's content with the rendered SVG, so the source is
+    // otherwise lost (and the validator can't re-parse it later).
+    nodes.forEach((n) => {
+      if (!n.hasAttribute('data-mermaid-source')) {
+        n.setAttribute('data-mermaid-source', n.textContent || '');
+      }
+    });
+
+    let mermaid;
     try {
       const mod = await import('https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs');
       mod.default.initialize({ startOnLoad: false, theme: 'neutral', securityLevel: 'loose' });
-      // Runtime loads with `defer`, so DOMContentLoaded has already fired by the
-      // time we get here — `startOnLoad` would never trigger. Call `run` directly.
-      await mod.default.run({ querySelector: 'pre.mermaid' });
-      mountDiagramModal();
+      mermaid = mod.default;
+      window.__specmintMermaid = mermaid;
     } catch (e) {
-      console.warn('[specmint] Mermaid failed to load — diagram source remains readable as text.', e);
+      console.warn('[specmint] Mermaid library failed to load — diagram source remains readable as text.', e);
+      return;
     }
+
+    // Render each diagram in its own try/catch so one bad block doesn't
+    // abort the rest (or skip mountDiagramModal). Mermaid's run() mutates
+    // nodes in place and replaces content with the SVG (or an error svg).
+    for (const node of nodes) {
+      try {
+        await mermaid.run({ nodes: [node] });
+      } catch (e) {
+        const fig = node.closest('figure.diagram');
+        const label = fig && fig.querySelector('.diagram__label');
+        const tag = label ? `"${label.textContent.trim()}"` : '(unlabeled)';
+        console.warn(`[specmint] Mermaid parse error in diagram ${tag} — source preserved on data-mermaid-source. Page continues.`, e);
+        if (fig) fig.classList.add('diagram--error');
+      }
+    }
+
+    mountDiagramModal();
   }
 
   // ---------------------------------------------------------------------------
@@ -382,38 +410,144 @@
   }
 
   // ---------------------------------------------------------------------------
-  // validate (dev-mode)
+  // validate — full spec validator. Returns an array of {area, level, msg}.
+  //   - Auto-runs after init; logs only when issues exist.
+  //   - Manual invocation: call window.specmintValidate() — always logs.
+  //   - Verbose dev mode: localStorage.specmintDebug = "1" forces a summary
+  //     even when the spec is clean.
+  //   - TDD additions: requires "testing" and "tdd-log" regions, checks that
+  //     every IMPL task has a "satisfies [TEST-XX-NN]" reference.
   // ---------------------------------------------------------------------------
 
-  function validate() {
-    if (typeof localStorage === 'undefined' || localStorage.getItem('specmintDebug') !== '1') return;
-    const meta = document.getElementById('spec-meta');
-    if (!meta) { console.warn('[specmint] #spec-meta missing'); return; }
-    try { JSON.parse(meta.textContent); }
-    catch (e) { console.warn('[specmint] #spec-meta is not valid JSON:', e); }
+  async function validate({ alwaysLog = false } = {}) {
+    const issues = [];
+    const debug = (typeof localStorage !== 'undefined' && localStorage.getItem('specmintDebug') === '1');
 
-    const html = document.documentElement.outerHTML;
-    const opens = (html.match(/<!--\s*region:(\w+)\s*-->/g) || []).map((s) => s.match(/region:(\w+)/)[1]);
-    const closes = (html.match(/<!--\s*endregion:(\w+)\s*-->/g) || []).map((s) => s.match(/endregion:(\w+)/)[1]);
-    const oSorted = [...opens].sort();
-    const cSorted = [...closes].sort();
-    if (oSorted.join('|') !== cSorted.join('|')) {
-      console.warn('[specmint] Sentinel mismatch:', { opens: oSorted, closes: cSorted });
+    // 1. JSON metadata
+    const meta = document.getElementById('spec-meta');
+    if (!meta) {
+      issues.push({ area: 'meta', level: 'error', msg: '#spec-meta script missing from <head>' });
+    } else {
+      try {
+        const obj = JSON.parse(meta.textContent);
+        ['id', 'title', 'status', 'created', 'updated'].forEach((k) => {
+          if (!(k in obj)) issues.push({ area: 'meta', level: 'error', msg: `Required field "${k}" missing from spec-meta JSON` });
+        });
+      } catch (e) {
+        issues.push({ area: 'meta', level: 'error', msg: `spec-meta JSON parse error: ${e.message}` });
+      }
     }
+
+    // 2. Region / endregion pairing
+    const htmlText = document.documentElement.outerHTML;
+    const opens = (htmlText.match(/<!--\s*region:([\w-]+)\s*-->/g) || []).map((s) => s.match(/region:([\w-]+)/)[1]);
+    const closes = (htmlText.match(/<!--\s*endregion:([\w-]+)\s*-->/g) || []).map((s) => s.match(/endregion:([\w-]+)/)[1]);
+    const oSorted = [...opens].sort().join('|');
+    const cSorted = [...closes].sort().join('|');
+    if (oSorted !== cSorted) {
+      const onlyOpens = opens.filter((n) => !closes.includes(n));
+      const onlyCloses = closes.filter((n) => !opens.includes(n));
+      issues.push({
+        area: 'regions',
+        level: 'error',
+        msg: `region/endregion mismatch — unclosed: [${onlyOpens.join(', ') || 'none'}] orphan close: [${onlyCloses.join(', ') || 'none'}]`,
+      });
+    }
+
+    // 3. Task code uniqueness
+    const taskCodes = Array.from(document.querySelectorAll('[data-task]')).map((el) => el.getAttribute('data-task'));
+    const counts = Object.create(null);
+    taskCodes.forEach((c) => { counts[c] = (counts[c] || 0) + 1; });
+    const dupCodes = Object.keys(counts).filter((c) => counts[c] > 1);
+    if (dupCodes.length) {
+      issues.push({ area: 'tasks', level: 'error', msg: `Duplicate task code(s): ${dupCodes.join(', ')}` });
+    }
+
+    // 4. Required regions present (warn only — some are optional)
+    //    TDD specs additionally require "testing" and "tdd-log".
+    const required = ['meta', 'header', 'overview', 'acceptance', 'architecture', 'testing', 'libraries', 'phases', 'tdd-log', 'decisions'];
+    required.forEach((name) => {
+      if (!opens.includes(name)) issues.push({ area: 'regions', level: 'warn', msg: `Recommended region "${name}" not found` });
+    });
+
+    // 5. TDD-specific: every IMPL task should reference a TEST task
+    const implTasks = Array.from(document.querySelectorAll('.task--impl'));
+    implTasks.forEach((el) => {
+      const code = el.getAttribute('data-task') || '(unknown)';
+      const text = el.textContent || '';
+      if (!/\bsatisfies\s*\[?\s*TEST-/i.test(text) && !/→\s*\[?TEST-/.test(text)) {
+        issues.push({ area: 'tdd', level: 'warn', msg: `IMPL task [${code}] has no "satisfies [TEST-XX-NN]" reference` });
+      }
+    });
+
+    // 6. Mermaid block render status (rendered nodes are marked diagram--error
+    //    by mountMermaid; if Mermaid is loaded we can also re-parse sources).
+    const mermaidNodes = Array.from(document.querySelectorAll('pre.mermaid'));
+    const errFigs = Array.from(document.querySelectorAll('figure.diagram--error'));
+    errFigs.forEach((fig) => {
+      const label = fig.querySelector('.diagram__label');
+      const tag = label ? `"${label.textContent.trim()}"` : '(unlabeled)';
+      issues.push({ area: 'mermaid', level: 'error', msg: `Render failed for diagram ${tag} — inspect data-mermaid-source on its <pre class="mermaid">` });
+    });
+    if (window.__specmintMermaid && typeof window.__specmintMermaid.parse === 'function') {
+      for (const node of mermaidNodes) {
+        const fig = node.closest('figure.diagram');
+        if (fig && fig.classList.contains('diagram--error')) continue;
+        const src = node.getAttribute('data-mermaid-source') || node.textContent || '';
+        try {
+          await window.__specmintMermaid.parse(src);
+        } catch (e) {
+          const label = fig && fig.querySelector('.diagram__label');
+          const tag = label ? `"${label.textContent.trim()}"` : '(unlabeled)';
+          issues.push({ area: 'mermaid', level: 'error', msg: `Parse error in diagram ${tag}: ${(e && e.message ? e.message.split('\n')[0] : String(e))}` });
+        }
+      }
+    }
+
+    // 7. HTML-entity contamination inside Mermaid source (common AI authoring bug)
+    mermaidNodes.forEach((node) => {
+      const src = node.getAttribute('data-mermaid-source') || '';
+      const hit = src.match(/&(amp|lt|gt|quot|#\d+);/);
+      if (hit) {
+        const fig = node.closest('figure.diagram');
+        const label = fig && fig.querySelector('.diagram__label');
+        const tag = label ? `"${label.textContent.trim()}"` : '(unlabeled)';
+        issues.push({ area: 'mermaid', level: 'warn', msg: `Diagram ${tag} contains HTML entity "${hit[0]}" — Mermaid parses pre-content as plain text; use raw "<", ">", "&" characters` });
+      }
+    });
+
+    // Reporting
+    const errors = issues.filter((i) => i.level === 'error').length;
+    const warnings = issues.filter((i) => i.level === 'warn').length;
+    if (issues.length === 0) {
+      if (alwaysLog || debug) console.info(`[specmint] validate OK — ${mermaidNodes.length} diagram(s), ${taskCodes.length} task(s), ${implTasks.length} IMPL task(s)`);
+    } else {
+      const label = `[specmint] validate — ${errors} error(s), ${warnings} warning(s)`;
+      console.groupCollapsed(label);
+      issues.forEach((i) => (i.level === 'error' ? console.warn : console.info)(`[${i.area}] ${i.msg}`));
+      console.groupEnd();
+    }
+    return issues;
   }
+
+  // Expose for manual invocation in the page console.
+  window.specmintValidate = () => validate({ alwaysLog: true });
 
   // ---------------------------------------------------------------------------
   // init
   // ---------------------------------------------------------------------------
 
-  function init() {
+  async function init() {
     deriveProgress();
-    mountMermaid();
     mountPrism();
     mountAnnotationArrows();
     mountCopyButtons();
     mountTocActiveSection();
-    validate();
+
+    // mountMermaid is awaited so validate() sees the final diagram--error
+    // state for failed blocks.
+    await mountMermaid();
+    await validate();
 
     const observer = new MutationObserver(deriveProgress);
     observer.observe(document.body, {

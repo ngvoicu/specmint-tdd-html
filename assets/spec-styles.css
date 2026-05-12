@@ -404,6 +404,22 @@ figure.diagram:hover .diagram__label::after {
   text-transform: none;
   letter-spacing: 0;
 }
+figure.diagram--error {
+  border: 1px dashed var(--danger, #d1242f);
+  border-radius: var(--radius-sm);
+  background: rgba(207, 34, 46, 0.04);
+  cursor: default;
+}
+figure.diagram--error .diagram__label {
+  color: var(--danger, #d1242f);
+}
+figure.diagram--error .diagram__label::before {
+  content: "⚠ render failed · ";
+  font-weight: 600;
+}
+figure.diagram--error:hover .diagram__label::after {
+  content: "  · run specmintValidate() in the console for details";
+}
 pre.ascii-diagram {
   background: var(--subtle-bg);
   border: 1px solid var(--border-subtle);

@@ -570,7 +570,25 @@ The spec must include:
 - **Acceptance Criteria** with one criterion of the form "Every behavior
   above has a corresponding red-green-refactor cycle recorded in the TDD Log"
 - **Architecture diagrams** — Mermaid (`flowchart`, `sequenceDiagram`,
-  `erDiagram`, `stateDiagram-v2`, etc.)
+  `erDiagram`, `stateDiagram-v2`, `timeline`, `journey`, `gantt`,
+  `block-beta`, `architecture-beta`, `c4Context`, `treemap`). Loaded
+  on-demand from CDN by `spec-runtime.js` when a `<pre class="mermaid">`
+  block exists. **Authoring rules (parse-error pitfalls):**
+  - **Use raw characters, never HTML entities**, inside `<pre class="mermaid">`.
+    Write `A --> B`, `A & B`, `"foo"` — not `A --&gt; B`, `A &amp; B`,
+    `&quot;foo&quot;`. Mermaid parses the pre as plain text; entity strings
+    are read literally and break parsing.
+  - **Quote labels containing `:` `(` `)` `,` or special characters**.
+    Flowchart: `A["My Node (with parens)"]`. Sequence: `A->>B: "label: with colon"`.
+    Unquoted colons are the most common cause of "got 'NEWLINE'" errors.
+  - **Identifier-safe IDs** — letters, digits, underscores. Use `participant API as "API service"` aliases for display names with spaces or punctuation.
+  - **Every arrow needs both endpoints and (where required) a label**;
+    bare `A -->` at end of line is a syntax error.
+  - **One statement per line**; do not run edges together with `;`.
+  - After writing/editing diagrams, **run the validator**: open the
+    rendered `SPEC.html` and call `specmintValidate()` in the page console.
+    Failed diagrams are marked with `figure.diagram--error` and their
+    source is preserved on `data-mermaid-source` for inspection.
 - **Testing Architecture** (mandatory) — five sub-tables: Test Framework &
   Tools, Isolation Strategy, Coverage Targets, Test Commands, plus an
   Anti-Patterns list
