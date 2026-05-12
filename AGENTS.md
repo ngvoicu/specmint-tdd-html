@@ -19,9 +19,10 @@ For architectural context across the Mint family (core vs TDD, distribution, eva
   - `testing-knowledge.md` — language-agnostic testing reference (frameworks, mocking, testcontainers, isolation, coverage, mutation testing across 6+ languages).
   - `command-contracts.md` — behavioral contracts including 20 TDD-specific contracts.
 - `assets/`:
-  - `preview.png` — README screenshot of a real rendered `SPEC.html` (rate-limit-middleware: paired TEST-IMPL tasks, RGR swimlane TDD Log, Testing Architecture section).
-  - `spec-styles.css` — shared design system (copied into `.specs/assets/` on first forge in any consuming project).
-  - `spec-runtime.js` — progress deriver + Mermaid/Prism init + SVG annotation arrows + RGR-phase derivation.
+  - `spec-styles.css` — shared design system (copied into `.specs/assets/` on every forge in any consuming project).
+  - `spec-runtime.js` — progress deriver + Mermaid/Prism init + SVG annotation arrows + RGR-phase derivation + diagram fullscreen modal + full-spec validator.
+
+  The reference render of a generated `SPEC.html` lives at <https://specmint.io/#gallery> (instead of an embedded screenshot in this repo).
 - `SKILL.md`: universal, cross-tool skill instructions (Codex, Cursor, Windsurf, Cline, Gemini CLI).
 - `specmint-tdd-html-workspace/`: eval scaffold (gitignored). Contains `evals/evals.json` with 8 placeholder TODO evals — not yet runnable.
 - `.specs/`: local dogfooding output for specs (gitignored).
@@ -30,7 +31,7 @@ For architectural context across the Mint family (core vs TDD, distribution, eva
 
 - `rg --files`: fast inventory of repository files before editing.
 - `sed -n '1,160p' commands/forge.md`: inspect command content in the terminal.
-- `python3 -m http.server 8000` (run inside a consumer project's `.specs/<id>/`): serve a real generated `SPEC.html` at <http://localhost:8000/SPEC.html> to eyeball visual changes — especially the TDD swimlane log and TEST-IMPL pair cards. The README screenshot at `assets/preview.png` is the reference render.
+- `python3 -m http.server 8000` (run inside a consumer project's `.specs/<id>/`): serve a real generated `SPEC.html` at <http://localhost:8000/SPEC.html> to eyeball visual changes — especially the TDD swimlane log and TEST-IMPL pair cards. The reference render lives at <https://specmint.io/#gallery>.
 - `python3 -c "import re,json,sys; p=sys.argv[1]; h=open(p).read(); m=re.search(r'<script[^>]*id=\"spec-meta\"[^>]*>(.+?)</script>',h,re.S); json.loads(m.group(1)); o=re.findall(r'<!--\\s*region:([\\w-]+)\\s*-->',h); c=re.findall(r'<!--\\s*endregion:([\\w-]+)\\s*-->',h); assert sorted(o)==sorted(c); print('OK')" path/to/SPEC.html`: validate a generated SPEC.html (full recipe in `references/validate.md`).
 - `npx skills add ngvoicu/specmint-tdd-html -a codex`: smoke-test universal-skill installation flow.
 - `git log --oneline -n 10`: review recent commit style before committing.

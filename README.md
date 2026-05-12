@@ -6,7 +6,7 @@ Spec Mint TDD HTML enforces strict TDD in AI coding workflows. Every task starts
 
 Works with Claude Code (as a plugin), Codex, Cursor, Windsurf, Cline, Gemini CLI, and any AI coding tool that can read files.
 
-![Spec preview — Rate Limit Middleware (TDD)](assets/preview.png)
+**[→ See a rendered SPEC.html](https://specmint.io/#gallery)** on specmint.io — Rate Limit Middleware exemplar with paired TEST-IMPL task cards, RGR swimlane TDD Log, and the full Testing Architecture section.
 
 ## The Problem
 
@@ -391,9 +391,8 @@ specmint-tdd-html/
 │   ├── testing-knowledge.md        # Language-agnostic testing reference (6+ languages)
 │   └── command-contracts.md        # Behavioral contracts (20 TDD-specific)
 ├── assets/
-│   ├── preview.png                 # README screenshot of a rendered SPEC.html
-│   ├── spec-styles.css             # Shared design system — copied to .specs/assets/ on first forge
-│   └── spec-runtime.js             # Progress deriver + Mermaid/Prism init + RGR-phase derivation
+│   ├── spec-styles.css             # Shared design system — copied to .specs/assets/ on every forge
+│   └── spec-runtime.js             # Progress deriver + Mermaid/Prism init + RGR-phase derivation + diagram modal + validator
 ├── specmint-tdd-html-workspace/    # Eval scaffold (gitignored)
 │   └── evals/evals.json            # Placeholder TODO assertions — not yet runnable
 ├── skills/
