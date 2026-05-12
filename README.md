@@ -110,16 +110,6 @@ Everything: all 8 slash commands (`/forge`, `/implement`, `/resume`, `/pause`, `
 /plugin install specmint-tdd-html
 ```
 
-Or manually:
-```bash
-git clone https://github.com/ngvoicu/specmint-tdd-html.git ~/.claude/plugins/specmint-tdd-html
-```
-
-After install, just run:
-```
-/specmint-tdd-html:forge "add user authentication"
-```
-
 ### Path 2: Quick Setup via npx (Any Tool)
 
 Installs the SKILL.md into your tool's skill/instruction directory so it knows how to read, update, and resume specs from `.specs/` with full TDD enforcement.
@@ -272,30 +262,6 @@ Then the next pair, and the next, and the next. True red-green-red-green.
 - **3 runs per cycle.** Tests MUST be run via Bash at every RED, GREEN, and REFACTOR transition. Claims like "tests would pass" are never acceptable.
 - **Tests are sacred.** Tests define expected behavior. During GREEN, if tests fail, fix the production code — never modify test assertions to match what the code returns. The only reason to touch a test is an actual bug (wrong import, syntax error). If a test expectation seems wrong, STOP and ask the user.
 - **Self-check before every task.** Am I about to write code without a failing test? Am I about to skip running tests? Am I about to modify a test to make it pass? If yes, stop and correct.
-
-## Multi-Tool Support
-
-`SPEC.html` is plain HTML with a JSON metadata blob and `data-*` attributes — editable in any tool. Claude Code, Codex, Cursor, Windsurf, Cline, and Gemini CLI can all work on the same `.specs/` directory.
-
-### Setting Up Other Tools
-
-Most tools can be set up via npx (see [Path 2](#path-2-quick-setup-via-npx-any-tool) above):
-
-```bash
-npx skills add ngvoicu/specmint-tdd-html -g -a <tool>
-```
-
-For manual setup, see the snippet format in [SKILL.md](SKILL.md).
-
-### Cross-Tool Sync
-
-All tools share the same conventions:
-- **Task codes** — `[TEST-AUTH-03]` and `[IMPL-AUTH-04]` are the same tasks everywhere
-- **`data-status` attributes** — Every tool reads `pending` / `in-progress` / `completed` / `blocked` the same way (and `data-tdd-phase` for RGR state on IMPL tasks)
-- **TDD Log swimlane** — Durable audit trail of every RGR cycle, shared across sessions and tools
-- **Region sentinels** — `<!-- region:phases -->` / `<!-- endregion:phases -->` anchor surgical edits
-
-**One rule:** Don't run two tools on the same spec simultaneously. Different specs in parallel is fine.
 
 ## The Forge Workflow (Detailed)
 
