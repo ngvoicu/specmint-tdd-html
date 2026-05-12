@@ -633,8 +633,23 @@ The spec must include:
 
   Unified diff by default; `data-view="split"` for changes >30 lines,
   multi-hunk, or where the before/after comparison itself is the point.
-- **UI Mockups** (omit entirely if `mockup-fidelity: none`) — wireframe or
-  hi-fi per the chosen fidelity
+- **UI Mockups** (omit entirely if `mockup-fidelity: none`) — wireframe
+  or hi-fi `<figure class="mockup">` blocks per the chosen fidelity.
+
+  **MUST compose from the `.wf-*` (wireframe) or `.ui-*` (hi-fi)
+  component classes in `assets/spec-styles.css`.** Before authoring,
+  **read `references/wireframe-library.md`** (App shell, Form, Empty
+  state, Table page, Modal, Stepper, Detail/master, Settings panel,
+  Card grid) or **`references/mockup-library.md`** (Login, Dashboard,
+  Data table, Modal, Toast, Validation form, Wizard, Alert+tabs,
+  Settings, Card grid).
+
+  **Never use ASCII art inside `<figure class="mockup">`** — no boxes
+  drawn with `+`, `|`, `-`; no pipe-delimited tables; no monospace
+  pseudo-diagrams. For grids use `.wf-table` (`style="--cols: N;"`)
+  or hi-fi `.ui-table` patterns. For cards use `.wf-card`. Compose new
+  structure from primitives if needed — do **not** fall back to ASCII.
+  The runtime validator flags ASCII inside mockup figures.
 - **Decision Log** — initially populated with key decisions from interviews
 - **TDD Log** (empty at forge time — filled during implementation as cycles close)
 - **Deviations** (empty at forge time)

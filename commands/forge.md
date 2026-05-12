@@ -390,6 +390,18 @@ The spec must include:
     multi-hunk, or where the before/after comparison itself is the point.
 11. **UI Mockups**: One or more `<figure class="mockup">` blocks per the
     chosen `mockup-fidelity`. Omit the entire section if fidelity is `none`.
+
+    **MUST compose from the `.wf-*` (wireframe) or `.ui-*` (hi-fi)
+    component classes in `assets/spec-styles.css`.** Read
+    `references/wireframe-library.md` or `references/mockup-library.md`
+    before authoring — both contain canonical patterns (App shell, Form,
+    Table page, Modal, Card grid, Dashboard, Empty state, etc.).
+
+    **Never use ASCII art inside `<figure class="mockup">`** — no boxes
+    drawn with `+`, `|`, `-`; no pipe-delimited tables; no monospace
+    pseudo-diagrams. For grids use `.wf-table` (`style="--cols: N;"`)
+    or hi-fi `.ui-table` patterns. For cards use `.wf-card`. Compose
+    new structure from primitives if needed — do not fall back to ASCII.
 12. **TDD Log**: Empty region — filled during implementation as cycles
     close. Each entry is a `<article class="tdd-cycle">` with three lanes
     (Red / Green / Refactor).

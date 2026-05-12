@@ -279,6 +279,29 @@
   // ---------------------------------------------------------------------------
 
   function mountPrism() {
+    // Normalize every <pre> inside a figure.code-diff so PrismJS will pick it
+    // up even if the AI forgot one of the required hooks:
+    //   1. <pre> must carry `language-diff-LANG` AND `diff-highlight`
+    //   2. Content must be wrapped in <code> (PrismJS does not highlight
+    //      bare <pre> children)
+    document.querySelectorAll('figure.code-diff').forEach((fig) => {
+      const lang = (fig.getAttribute('data-language') || 'plaintext')
+        .toLowerCase().replace(/[^a-z0-9+-]/g, '');
+      fig.querySelectorAll('pre').forEach((pre) => {
+        if (!Array.from(pre.classList).some((c) => /^language-diff(-|$)/.test(c))) {
+          Array.from(pre.classList).filter((c) => c.startsWith('language-')).forEach((c) => pre.classList.remove(c));
+          pre.classList.add(`language-diff-${lang}`);
+        }
+        if (!pre.classList.contains('diff-highlight')) pre.classList.add('diff-highlight');
+        if (!pre.querySelector(':scope > code')) {
+          const code = document.createElement('code');
+          code.className = pre.className;
+          while (pre.firstChild) code.appendChild(pre.firstChild);
+          pre.appendChild(code);
+        }
+      });
+    });
+
     if (!document.querySelector('pre[class*="language-"]')) return;
 
     const cssHrefs = [
@@ -514,6 +537,23 @@
         const tag = label ? `"${label.textContent.trim()}"` : '(unlabeled)';
         issues.push({ area: 'mermaid', level: 'warn', msg: `Diagram ${tag} contains HTML entity "${hit[0]}" — Mermaid parses pre-content as plain text; use raw "<", ">", "&" characters` });
       }
+    });
+
+    // 8. ASCII art inside mockup figures (common AI authoring bug — mockups
+    //    MUST compose from .wf-* / .ui-* primitives, never <pre> with boxes)
+    document.querySelectorAll('figure.mockup').forEach((fig) => {
+      const pres = fig.querySelectorAll('pre');
+      pres.forEach((pre) => {
+        const text = pre.textContent || '';
+        const pipes = (text.match(/\|/g) || []).length;
+        const dashRuns = (text.match(/-{4,}/g) || []).length;
+        const corners = (text.match(/\+[-+]{2,}\+/g) || []).length;
+        if ((pipes >= 6 && dashRuns >= 2) || corners >= 2) {
+          const cap = fig.querySelector('figcaption');
+          const tag = cap ? `"${cap.textContent.trim().slice(0, 60)}"` : '(uncaptioned)';
+          issues.push({ area: 'mockup', level: 'warn', msg: `ASCII art detected inside mockup ${tag} — compose from .wf-* / .ui-* components instead (see references/wireframe-library.md or mockup-library.md)` });
+        }
+      });
     });
 
     // Reporting
