@@ -96,117 +96,6 @@ Open `examples/SPEC.html` in a browser to see the rate-limit-middleware TDD exem
 
 The plugin ships a canonical empty template at `references/html-template.html`, edit recipes for every common operation (including `data-tdd-phase` swaps and appending TDD Log entries) at `references/edit-recipes.md`, plus mockup pattern libraries (`wireframe-library.md` + `mockup-library.md`).
 
-<details>
-<summary>Why we removed the old markdown example</summary>
-
-The previous README had a full markdown-flavored SPEC.md example here. In the HTML format, the equivalent content lives in `examples/SPEC.html` — open it in a browser to see what a real spec renders as.
-
-</details>
-
-```markdown
----
-id: user-auth-system
-title: User Auth System
-status: active
-created: 2026-02-10
-updated: 2026-02-11
-priority: high
-tags: [auth, security, backend]
----
-
-# User Auth System
-
-## Overview
-Add JWT-based authentication with OAuth (Google, GitHub) to the Express
-API. Uses the existing middleware pattern in src/middleware/.
-
-## Testing Architecture
-
-### Test Framework & Tools
-| Tool | Choice | Version | Purpose |
-|------|--------|---------|---------|
-| Test framework | Vitest | 3.0.4 | Unit and integration test runner |
-| Mocking library | MSW | 2.7.0 | HTTP mocking for external APIs |
-| DB testing | Testcontainers | 10.18.0 | Real PostgreSQL for integration tests |
-| Coverage | v8 (Vitest) | built-in | Line and branch coverage |
-
-### Isolation Strategy
-| Layer | Approach | Services |
-|-------|----------|----------|
-| Domain logic | No mocks; pure functions | None |
-| Service layer | Mock ports/interfaces | OAuth providers |
-| Data access | Testcontainers | PostgreSQL |
-| HTTP clients | MSW | Google, GitHub OAuth APIs |
-
-### Coverage Targets
-| Metric | Target |
-|--------|--------|
-| Line coverage | 85% |
-| Branch coverage | 75% |
-
-### Test Commands
-| Command | Purpose |
-|---------|---------|
-| `npx vitest run` | Run all tests |
-| `npx vitest --coverage` | Generate coverage report |
-
-## Phase 1: Auth Foundation [completed]
-- [x] [TEST-AUTH-01] Write tests for JWT generation and verification
-- [x] [IMPL-AUTH-02] Set up auth middleware -> satisfies [TEST-AUTH-01]
-- [x] [TEST-AUTH-03] Write tests for User model CRUD
-- [x] [IMPL-AUTH-04] Create User model with Prisma -> satisfies [TEST-AUTH-03]
-- [x] [TEST-AUTH-05] Write tests for refresh token rotation
-- [x] [IMPL-AUTH-06] Implement JWT + refresh rotation -> satisfies [TEST-AUTH-05]
-
-## Phase 2: OAuth Integration [in-progress]
-- [x] [TEST-AUTH-07] Write tests for Google OAuth flow
-- [x] [IMPL-AUTH-08] Google OAuth provider -> satisfies [TEST-AUTH-07]
-- [ ] [TEST-AUTH-09] Write tests for GitHub OAuth flow <- current
-- [ ] [IMPL-AUTH-10] GitHub OAuth provider -> satisfies [TEST-AUTH-09]
-- [ ] [TEST-AUTH-11] Write tests for token exchange
-- [ ] [IMPL-AUTH-12] Token exchange flow -> satisfies [TEST-AUTH-11]
-
----
-
-## Resume Context
-> Completed Google OAuth cycle (TEST-07 red, IMPL-08 green+refactored).
-> Starting GitHub OAuth callback tests next.
->
-> Last Cycle: [IMPL-AUTH-08] GREEN — 8/8 pass, refactored OAuth config
-> Current: [TEST-AUTH-09] Write GitHub OAuth tests
-> TDD Phase: RED (about to write test, run, confirm fail)
-> Last Test Run: `npx vitest run tests/auth/` at 14:32, 8 passed / 0 failed
->
-> Next step: Write GitHub OAuth callback tests in
-> `tests/auth/oauth/github.test.ts`. Use the same pattern as Google in
-> `tests/auth/oauth/google.test.ts`.
-
-## Decision Log
-| Date | Decision | Rationale |
-|------|----------|-----------|
-| 2026-02-10 | JWT over sessions | Stateless, scales for microservices |
-| 2026-02-10 | Refresh token rotation | Limits damage from stolen tokens |
-| 2026-02-10 | Vitest over Jest | Faster; native ESM; same project uses Vite |
-| 2026-02-11 | MSW over nock | Network-level intercept; works in browser and Node |
-
-## TDD Log
-| Task | Red | Green | Refactor |
-|------|-----|-------|----------|
-| [TEST-AUTH-01] | `Expected: valid JWT, Received: undefined` (3 fail) | — | — |
-| [IMPL-AUTH-02] | — | `3 passed` | Extracted middleware config to constants |
-| [TEST-AUTH-03] | `relation "users" does not exist` (4 fail) | — | — |
-| [IMPL-AUTH-04] | — | `7 passed` | — |
-| [TEST-AUTH-05] | `Expected rotated token, got same token` (2 fail) | — | — |
-| [IMPL-AUTH-06] | — | `9 passed` | Renamed `createToken` -> `issueAccessToken` |
-| [TEST-AUTH-07] | `404: route not implemented` (3 fail) | — | — |
-| [IMPL-AUTH-08] | — | `12 passed` | Extracted OAuth config to constants |
-
-## Deviations
-| Task | Spec Said | Actually Did | Why |
-|------|-----------|-------------|-----|
-| IMPL-AUTH-02 | Use passport.js | Direct middleware | Simpler for JWT-only; avoids passport session overhead |
-```
-
 ### The TDD Structure
 
 Spec Mint TDD HTML enforces test-first discipline at every level of the spec:
@@ -313,13 +202,13 @@ For other tools, this installs the SKILL.md which teaches the tool the full TDD 
 → Scans routes, schemas, security config
 → Writes .openapi/openapi.yaml + per-endpoint docs
 
-# Session ends — save TDD context
+# Session ends — finalize at a clean RGR boundary
 /specmint-tdd-html:pause
-→ Writes resume context (TDD phase, failing tests, last run, next step)
+→ Appends any pending TDD Log entries, sets status to paused, runs validate
 
 # New session — pick up where you left off
 /specmint-tdd-html:resume
-→ Reads resume context, shows TDD phase, continues from exact spot
+→ Derives TDD phase from data-tdd-phase or next task type, shows last cycle
 
 # Juggling features
 /specmint-tdd-html:list                    # See all specs
@@ -331,17 +220,17 @@ For other tools, this installs the SKILL.md which teaches the tool the full TDD 
 
 Once configured via `npx skills add`, every tool understands the same TDD spec lifecycle. Here's the complete workflow:
 
-**Create a spec** — Ask the tool to plan or spec out work. It creates `.specs/<id>/SPEC.html` with Testing Architecture, feature phases with alternating TEST-IMPL tasks, TDD Log, a decision log, and resume context.
+**Create a spec** — Ask the tool to plan or spec out work. It creates `.specs/<id>/SPEC.html` with Testing Architecture, feature phases of paired TEST-IMPL tasks, an empty TDD Log (filled during implementation), a decision log, and a deviations table.
 
-**Resume** — The tool reads `.specs/registry.md` to find the active spec, loads the SPEC.html, finds the `← current` task, reads the Resume Context section (including TDD phase and failing tests), and continues from exactly where you left off.
+**Resume** — The tool reads `.specs/registry.md` to find the active spec, loads the SPEC.html, identifies the first task with `data-status="pending"` in the in-progress phase, and derives the current TDD phase (RED for a pending TEST task, GREEN for a pending IMPL task, or whatever `data-tdd-phase` says on an in-progress IMPL task).
 
-**Pause** — The tool captures current state into the Resume Context section: TDD phase (RED/GREEN/REFACTOR), failing test names, last test run output, which files were modified (specific paths, function names), what was completed, the exact next step. Updates checkboxes, sets status to `paused`.
+**Pause** — The tool finalizes state at a clean RGR-cycle boundary: every completed task has `data-status="completed"`, every closed cycle has a `<article class="tdd-cycle">` entry appended to the TDD Log, the status pill flips to `Paused`, and the validate recipe runs.
 
 **Switch** — The tool pauses the current spec (full pause), loads the target spec, sets it to `active` in the registry, and resumes it.
 
 **List** — The tool reads `.specs/registry.md` and shows specs grouped by status (active, paused, completed).
 
-**Complete** — The tool verifies all tasks are checked, runs the full test suite one final time, sets status to `completed` in both the SPEC.html frontmatter and the registry.
+**Complete** — The tool verifies every task has `data-status="completed"`, runs the full test suite one final time, and sets status to `completed` in both the SPEC.html `<script id="spec-meta">` JSON and the registry.
 
 #### Tool-specific invocation examples
 
@@ -406,7 +295,7 @@ Then the next pair, and the next, and the next. True red-green-red-green.
 
 ## Multi-Tool Support
 
-The spec format is pure markdown. Claude Code, Codex, Cursor, Windsurf, Cline, and Gemini CLI can all work on the same `.specs/` directory.
+`SPEC.html` is plain HTML with a JSON metadata blob and `data-*` attributes — editable in any tool. Claude Code, Codex, Cursor, Windsurf, Cline, and Gemini CLI can all work on the same `.specs/` directory.
 
 ### Setting Up Other Tools
 
@@ -420,12 +309,11 @@ For manual setup, see the snippet format in [SKILL.md](SKILL.md).
 
 ### Cross-Tool Sync
 
-All tools share the same files:
+All tools share the same conventions:
 - **Task codes** — `[TEST-AUTH-03]` and `[IMPL-AUTH-04]` are the same tasks everywhere
-- **`← current` marker** — Every tool knows which task is next
-- **Resume Context** — TDD phase, failing tests, last run, file paths, next step
-- **TDD Log** — Audit trail shared across sessions and tools
-- **Phase status markers** — `[pending]`, `[in-progress]`, `[completed]`, `[blocked]`
+- **`data-status` attributes** — Every tool reads `pending` / `in-progress` / `completed` / `blocked` the same way (and `data-tdd-phase` for RGR state on IMPL tasks)
+- **TDD Log swimlane** — Durable audit trail of every RGR cycle, shared across sessions and tools
+- **Region sentinels** — `<!-- region:phases -->` / `<!-- endregion:phases -->` anchor surgical edits
 
 **One rule:** Don't run two tools on the same spec simultaneously. Different specs in parallel is fine.
 
@@ -469,14 +357,16 @@ Multiple rounds (typically 2-5) until every task can be described concretely. Ea
 
 ### Phase 5: Write Spec
 
-Synthesizes everything into a comprehensive SPEC.html:
-- Architecture diagrams (ASCII and/or Mermaid)
+Synthesizes everything into a comprehensive `SPEC.html`:
+- Mermaid architecture diagrams (flowchart, sequenceDiagram, erDiagram, etc.)
 - **Testing Architecture** — framework & tools table, isolation strategy per layer, coverage targets, test commands, anti-patterns to avoid
 - Library comparison table with alternatives and rationale
-- **Feature phases with alternating TEST-IMPL task pairs**: write test, implement, write test, implement — true red-green-refactor
-- Tasks with `[TEST-PREFIX-NN]` and `[IMPL-PREFIX-NN]` codes, with `-> satisfies` cross-references
-- **TDD Log** (empty, filled during implementation)
-- Decision log, resume context, deviations table
+- **Feature phases with paired TEST-IMPL tasks** in `<li class="task-pair">` wrappers: write test, implement, write test, implement — true red-green-refactor
+- Tasks with `[TEST-PREFIX-NN]` and `[IMPL-PREFIX-NN]` codes, IMPL tasks include `→ satisfies [TEST-XX-NN]` references
+- Optional UI mockups (wireframe or hi-fi, per the chosen `mockup-fidelity`)
+- Optional code-diff previews (PrismJS syntax-highlighted)
+- **TDD Log** (empty at forge time; filled during implementation as RGR cycles close)
+- Decision log, deviations table
 
 **Coherence review (mandatory before presenting):**
 1. Entire spec tells a coherent story
@@ -494,14 +384,14 @@ Synthesizes everything into a comprehensive SPEC.html:
 ### Phase 6: Implement
 
 Works through the spec task by task (via `/implement`), enforcing strict TDD:
-- Marks tasks `← current` as they start
-- **TEST tasks**: write tests, run them, confirm they FAIL, log red output
-- **IMPL tasks**: write minimum code, run tests, confirm they PASS, refactor, run tests again, log green + refactor output
-- Checks off `- [x]` when done
-- Updates phase status markers and registry
-- Logs new decisions to the Decision Log
-- Logs deviations when implementation diverges from spec
-- Updates Resume Context at natural pauses
+- **TEST tasks**: write tests, run them via Bash, confirm they FAIL, stash red output
+- **IMPL tasks**: set `data-tdd-phase="green"`, write minimum code, run tests, confirm they PASS, refactor under `data-tdd-phase="refactor"`, run tests again
+- Swaps `data-status="pending"` → `data-status="completed"` on each task as it finishes
+- When a cycle closes, appends an `<article class="tdd-cycle">` to the TDD Log with Red / Green / Refactor lanes filled in
+- Runs the validate recipe after every edit
+- Updates phase `data-status` + pill class when a phase completes; promotes the next phase
+- Updates the registry's progress count and `updated` date
+- Logs decisions to the Decision Log; logs spec drift to Deviations
 
 ## Supported Languages
 
@@ -532,11 +422,13 @@ specmint-tdd-html/
 ├── .claude-plugin/
 │   ├── plugin.json                 # Plugin metadata (v2.0.0)
 │   └── marketplace.json            # Marketplace registration
+├── .cursor-plugin/
+│   └── plugin.json                 # Cursor distribution metadata
 ├── commands/
 │   ├── forge.md                    # Research + test infra analysis → interview → TDD spec
-│   ├── implement.md                # Strict red-green-refactor cycle
-│   ├── resume.md                   # Resume with TDD context (phase, failing tests)
-│   ├── pause.md                    # Pause with TDD state
+│   ├── implement.md                # Strict red-green-refactor cycle (RUN tests via Bash at every transition)
+│   ├── resume.md                   # Resume; derives current TDD phase
+│   ├── pause.md                    # Pause at a clean RGR boundary
 │   ├── switch.md                   # Switch between specs
 │   ├── list.md                     # List all specs
 │   ├── status.md                   # Detailed progress with TDD indicators
@@ -544,9 +436,20 @@ specmint-tdd-html/
 ├── agents/
 │   └── researcher.md               # Deep research subagent (Opus) + test infra analysis
 ├── references/
-│   ├── spec-format.md              # SPEC.html format with Testing Architecture + TDD Log
-│   ├── command-contracts.md        # Behavioral contracts (20 TDD-specific)
-│   └── testing-knowledge.md        # Language-agnostic testing reference (6+ languages)
+│   ├── spec-format.md              # SPEC.html format reference (TDD-aware)
+│   ├── html-template.html          # Canonical empty SPEC.html template
+│   ├── edit-recipes.md             # Before/after snippets for every surgical edit (incl. data-tdd-phase, TDD Log append)
+│   ├── validate.md                 # Post-edit validation recipe (Python one-liner)
+│   ├── wireframe-library.md        # Wireframe mockup patterns (.wf-*)
+│   ├── mockup-library.md           # Hi-fi mockup patterns (.ui-*)
+│   ├── testing-knowledge.md        # Language-agnostic testing reference (6+ languages)
+│   └── command-contracts.md        # Behavioral contracts (20 TDD-specific)
+├── examples/
+│   ├── SPEC.html                   # Rate-limit-middleware TDD exemplar (paired tasks + RGR swimlane log)
+│   ├── spec-styles.css             # Shared design system — copied to .specs/assets/ on first forge
+│   └── spec-runtime.js             # Progress deriver + Mermaid/Prism init + RGR-phase derivation
+├── specmint-tdd-html-workspace/    # Eval scaffold (gitignored)
+│   └── evals/evals.json            # Placeholder TODO assertions — not yet runnable
 ├── skills/
 │   └── specmint-tdd-html/
 │       └── SKILL.md                # → ../../SKILL.md (symlink for plugin discovery)
@@ -556,9 +459,9 @@ specmint-tdd-html/
 
 ## Spec Format
 
-Full specification in [`references/spec-format.md`](references/spec-format.md). Behavioral guardrails in [`references/command-contracts.md`](references/command-contracts.md).
+Full specification in [`references/spec-format.md`](references/spec-format.md). Surgical edit recipes in [`references/edit-recipes.md`](references/edit-recipes.md). Post-edit validator in [`references/validate.md`](references/validate.md). Behavioral guardrails in [`references/command-contracts.md`](references/command-contracts.md).
 
-### Frontmatter
+### Metadata (single-line JSON in `<script id="spec-meta">`)
 
 | Field | Required | Description |
 |-------|:---:|-------------|
@@ -568,24 +471,30 @@ Full specification in [`references/spec-format.md`](references/spec-format.md). 
 | `created` | Yes | ISO date (YYYY-MM-DD) |
 | `updated` | Yes | ISO date of last modification |
 | `priority` | No | `high`, `medium`, `low` (default: medium) |
-| `tags` | No | YAML array |
+| `tags` | No | JSON array |
+| `mockup-fidelity` | No | `wireframe`, `hi-fi`, `none` |
+
+Canonical key order: `id`, `title`, `status`, `created`, `updated`, `priority`, `tags`, `mockup-fidelity` (logical, not alphabetical).
 
 ### Conventions
 
-- **Phase markers**: `[pending]`, `[in-progress]`, `[completed]`, `[blocked]`
-- **Task types**: `[TEST-XX-NN]` for test tasks, `[IMPL-XX-NN]` for implementation tasks — alternating within each phase
-- **Task codes**: `[TEST-PREFIX-NN]` for test tasks, `[IMPL-PREFIX-NN]` for implementation tasks — unique per task, auto-incrementing across all phases
-- **Satisfies references**: `[IMPL-XX-NN] <task> -> satisfies [TEST-XX-NN]` — links implementation to the tests it makes pass
-- **Task checkboxes**: `- [ ] [TEST-AUTH-01]` unchecked, `- [x] [TEST-AUTH-01]` done
-- **Current task**: `← current` after the task text
-- **Uncertainty**: `[NEEDS CLARIFICATION]` after the task code on unclear tasks
-- **Architecture Diagram**: ASCII art or Mermaid diagrams (system design, data flow, ER, state machines)
-- **Testing Architecture**: Framework & tools, isolation strategy, coverage targets, test commands, anti-patterns
-- **Library Choices**: Comparison table with alternatives considered and rationale
-- **TDD Log**: Red/green/refactor audit trail per task
-- **Resume Context**: Blockquote with TDD phase, failing tests, last test run, file paths, exact next step
+- **Phase status** (`data-status` on `<details class="phase">`): `pending`, `in-progress`, `completed`, `blocked`
+- **Task status** (`data-status` on `<li class="task">`): same values
+- **TDD RGR state** (`data-tdd-phase` on `<li class="task task--impl">`): `red`, `green`, `refactor`
+- **Task codes**: `[TEST-PREFIX-NN]` / `[IMPL-PREFIX-NN]` — auto-incrementing across all phases starting at 01
+- **Satisfies references**: `<li class="task task--impl">...→ satisfies <code>[TEST-XX-NN]</code></li>` — links IMPL to the test it makes pass
+- **TEST-IMPL pairs**: wrapped in `<li class="task-pair">`. Each pair is one red-green-refactor cycle.
+- **Region sentinels**: `<!-- region:NAME -->` / `<!-- endregion:NAME -->` around every top-level section — used as anchors for surgical edits
+- **No current marker**: the first task with `data-status="pending"` in the active phase is implicitly current
+- **Uncertainty**: `<span class="ac-flag">Needs clarification</span>` inline in an acceptance criterion
+- **Architecture Diagrams**: Mermaid (`flowchart`, `sequenceDiagram`, `erDiagram`, `stateDiagram-v2`, `timeline`, etc.) inside `<pre class="mermaid">` blocks
+- **Testing Architecture**: 5 sub-tables — Test Framework & Tools, Isolation Strategy, Coverage Targets, Test Commands, Anti-Patterns
+- **Code Previews**: `<figure class="code-diff">` with PrismJS `diff-highlight` for syntax-highlighted red/green diffs
+- **UI Mockups**: `mockup--wireframe` (grayscale `.wf-*` primitives) or `mockup--hifi` (real-looking `.ui-*` components) — both bespoke, zero CDN, constrained palette to prevent bikeshedding
+- **TDD Log**: `<article class="tdd-cycle">` per RGR cycle, rendered as a 3-lane swimlane (RED / GREEN / REFACTOR) with monospace test output inside each lane
 - **Decision Log**: Table with date, decision, rationale
 - **Deviations**: Table tracking where implementation diverged from spec
+- **Progress strings**: Never authored. `spec-runtime.js` derives them — including "Current TDD phase" — from `data-status` / `data-tdd-phase` counts at page load.
 
 ## Why Not Just Use Plan Mode?
 
