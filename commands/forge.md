@@ -466,7 +466,20 @@ Save to:
 ```
 
 **Run the validate recipe** (`references/validate.md`) to confirm the file
-parses cleanly. Then update `.specs/registry.md` (set status to `active`).
+parses cleanly (JSON + region pairing).
+
+**Then run the browser validator — required gate, not optional.** Serve
+`.specs/<id>/` (e.g., `python3 -m http.server` in that dir or open the
+file in a browser), open DevTools console, run `await specmintValidate()`,
+and **fix every `[mermaid]` error before presenting**. The validator
+surfaces Mermaid parse failures (source preserved on `data-mermaid-source`
+of the failing `<pre>` — read it, fix per the Mermaid rules in SKILL.md,
+reload, re-validate), duplicate task codes, missing recommended regions
+(including `testing` and `tdd-log`), IMPL tasks missing `satisfies`
+references, and HTML-entity contamination. A spec with any
+`figure.diagram--error` is not ready to present.
+
+Then update `.specs/registry.md` (set status to `active`).
 
 **Present the spec to the user and wait for approval.** Walk through the
 phases (highlighting the TEST-IMPL task pairs and any UI mockups) and ask:

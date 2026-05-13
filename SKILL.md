@@ -573,22 +573,84 @@ The spec must include:
   `erDiagram`, `stateDiagram-v2`, `timeline`, `journey`, `gantt`,
   `block-beta`, `architecture-beta`, `c4Context`, `treemap`). Loaded
   on-demand from CDN by `spec-runtime.js` when a `<pre class="mermaid">`
-  block exists. **Authoring rules (parse-error pitfalls):**
-  - **Use raw characters, never HTML entities**, inside `<pre class="mermaid">`.
-    Write `A --> B`, `A & B`, `"foo"` — not `A --&gt; B`, `A &amp; B`,
-    `&quot;foo&quot;`. Mermaid parses the pre as plain text; entity strings
-    are read literally and break parsing.
-  - **Quote labels containing `:` `(` `)` `,` or special characters**.
-    Flowchart: `A["My Node (with parens)"]`. Sequence: `A->>B: "label: with colon"`.
-    Unquoted colons are the most common cause of "got 'NEWLINE'" errors.
-  - **Identifier-safe IDs** — letters, digits, underscores. Use `participant API as "API service"` aliases for display names with spaces or punctuation.
-  - **Every arrow needs both endpoints and (where required) a label**;
-    bare `A -->` at end of line is a syntax error.
-  - **One statement per line**; do not run edges together with `;`.
-  - After writing/editing diagrams, **run the validator**: open the
-    rendered `SPEC.html` and call `specmintValidate()` in the page console.
-    Failed diagrams are marked with `figure.diagram--error` and their
-    source is preserved on `data-mermaid-source` for inspection.
+  block exists.
+
+  **Mermaid authoring rules — read every time, do not skim.** Every
+  parse error this skill has ever produced has the same root cause:
+  the author judged a label or alias "didn't need quoting" and was wrong.
+  The rules below remove the judgment call.
+
+  1. **No HTML entities inside `<pre class="mermaid">`.** Write
+     `A --> B`, not `A --&gt; B`. Mermaid parses pre-content as plain
+     text; entity strings are read literally and break parsing.
+
+  2. **ALWAYS quote participant aliases** in `sequenceDiagram` — every
+     single one, no exceptions:
+     ```
+     participant U as "User"
+     participant API as "Backend API (port 8080)"
+     participant DB as "PostgreSQL"
+     ```
+     ❌ `participant API as Backend API (port 8080)` — unquoted parens
+     ✅ `participant API as "Backend API (port 8080)"`
+
+  3. **ALWAYS quote message labels** in `sequenceDiagram` — every arrow:
+     ```
+     U->>API: "POST /endpoint (body)"
+     API->>DB: "SELECT col1, col2, col3"
+     DB-->>API: "SQL stream (application/sql;charset=UTF-8)"
+     ```
+     The lexer treats `:` `(` `)` `,` `;` as syntax tokens in unquoted
+     form. Wrap every label.
+
+  4. **ALWAYS quote `flowchart` node labels that aren't pure identifiers.**
+     ```
+     A["My Node (with parens)"]
+     B["Process: do thing"]
+     C{"Decision: any X?"}
+     ```
+
+  5. **Keep IDs identifier-safe** — letters, digits, underscores only.
+     Use `_` where you'd reach for `.` or `-` in an ID.
+
+  6. **One statement per line.** Terminate every arrow with a target.
+
+  7. **Self-check loop after every Mermaid block.** Before moving on,
+     re-read every `participant` line and every arrow line. If any
+     contains `(`, `)`, `,`, `:`, `;`, or `/` outside a quoted span,
+     wrap it now.
+
+  8. **Validator-clean is required.** After writing, open the rendered
+     `SPEC.html`, run `specmintValidate()` in the console, and fix
+     every `[mermaid]` error. Source for each failing block is on
+     `data-mermaid-source`. A spec with any `figure.diagram--error`
+     is not done.
+
+  **Canonical sequenceDiagram template** (copy, then customize — every
+  alias and every label is quoted; do not deviate):
+  ```
+  sequenceDiagram
+      participant U as "User"
+      participant FE as "Frontend (React, /sites + /setup)"
+      participant API as "Backend API"
+      participant DB as "PostgreSQL"
+
+      U->>FE: "click submit"
+      FE->>API: "POST /api/sites (body)"
+      API->>DB: "INSERT INTO sites"
+      DB-->>API: "201 Created"
+      API-->>FE: "200 OK"
+      FE-->>U: "show success toast"
+  ```
+
+  **Canonical flowchart template:**
+  ```
+  flowchart LR
+      A["Start"] --> B{"Has token?"}
+      B -- yes --> C["Call /api (with token)"]
+      B -- no  --> D["Redirect /login"]
+      C --> E["200 OK"]
+  ```
 - **Testing Architecture** (mandatory) — five sub-tables: Test Framework &
   Tools, Isolation Strategy, Coverage Targets, Test Commands, plus an
   Anti-Patterns list
