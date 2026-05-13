@@ -144,6 +144,56 @@
       else { ({ done = 0, total = 0 } = counts.perPhase[m[2]] || {}); }
       bar.style.setProperty('--progress', total === 0 ? '0%' : `${(done / total) * 100}%`);
     });
+
+    // Auto-inject a progress bar into each .scorecard__cell based on the
+    // data-progress-target it contains. No SKILL.md change required.
+    const cellRules = [
+      { needles: ['spec-done', 'spec-tasks-total', 'spec-total'], done: counts.spec.done, total: counts.spec.total },
+      { needles: ['phases-done', 'phases-total'],                  done: counts.phases.done, total: counts.phases.total },
+      { needles: ['ac-done', 'ac-total'],                          done: counts.ac.done, total: counts.ac.total },
+      { needles: ['tdd-cycles-done', 'tdd-cycles-total'],          done: counts.tddCycles.done, total: counts.tddCycles.total },
+    ];
+    document.querySelectorAll('.scorecard__cell').forEach((cell) => {
+      const keys = Array.from(cell.querySelectorAll('[data-progress-target]'))
+        .map((el) => el.getAttribute('data-progress-target'));
+      // TDD phase cell — colour the value, attach a full-width bar.
+      if (keys.includes('tdd-phase')) {
+        let bar = cell.querySelector(':scope > .scorecard__bar');
+        if (!bar) {
+          bar = document.createElement('div');
+          bar.className = 'scorecard__bar';
+          cell.appendChild(bar);
+        }
+        bar.style.setProperty('--progress', '100%');
+        const phaseLc = (tddPhase || '').toLowerCase();
+        if (['red', 'green', 'refactor'].includes(phaseLc)) {
+          cell.setAttribute('data-tdd-phase-value', phaseLc);
+        } else {
+          cell.removeAttribute('data-tdd-phase-value');
+        }
+        return;
+      }
+      const rule = cellRules.find((r) => r.needles.some((n) => keys.includes(n)));
+      if (!rule) return;
+      let bar = cell.querySelector(':scope > .scorecard__bar');
+      if (!bar) {
+        bar = document.createElement('div');
+        bar.className = 'scorecard__bar';
+        cell.appendChild(bar);
+      }
+      const pctNum = rule.total === 0 ? 0 : (rule.done / rule.total) * 100;
+      bar.style.setProperty('--progress', `${pctNum}%`);
+      if (rule.total === 0) cell.setAttribute('data-progress', 'empty');
+      else if (rule.done >= rule.total) cell.setAttribute('data-progress', 'complete');
+      else cell.setAttribute('data-progress', 'partial');
+    });
+
+    // Per-phase header progress strip.
+    document.querySelectorAll('.phase[data-phase]').forEach((phase) => {
+      const id = phase.getAttribute('data-phase');
+      const { done = 0, total = 0 } = counts.perPhase[id] || {};
+      phase.style.setProperty('--progress', total === 0 ? '0%' : `${(done / total) * 100}%`);
+    });
   }
 
   // ---------------------------------------------------------------------------
@@ -166,7 +216,46 @@
     let mermaid;
     try {
       const mod = await import('https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs');
-      mod.default.initialize({ startOnLoad: false, theme: 'neutral', securityLevel: 'loose' });
+      mod.default.initialize({
+        startOnLoad: false,
+        theme: 'base',
+        securityLevel: 'loose',
+        themeVariables: {
+          background: '#FFFFFF',
+          primaryColor: '#FFFFFF',
+          primaryBorderColor: '#D0D7DE',
+          primaryTextColor: '#1F2328',
+          secondaryColor: '#F6F8FA',
+          tertiaryColor: '#DDE7FF',
+          lineColor: '#656D76',
+          textColor: '#1F2328',
+          actorBkg: '#F6F8FA',
+          actorBorder: '#AFB8C1',
+          actorTextColor: '#1F2328',
+          actorLineColor: '#D0D7DE',
+          signalColor: '#0535C1',
+          signalTextColor: '#1F2328',
+          labelBoxBkgColor: '#DDE7FF',
+          labelBoxBorderColor: '#0535C1',
+          labelTextColor: '#0535C1',
+          loopTextColor: '#656D76',
+          noteBkgColor: '#FFF8C5',
+          noteBorderColor: '#9A6700',
+          noteTextColor: '#1F2328',
+          activationBkgColor: '#DDE7FF',
+          activationBorderColor: '#0535C1',
+          attributeBackgroundColorOdd: '#FFFFFF',
+          attributeBackgroundColorEven: '#F6F8FA',
+          mainBkg: '#FFFFFF',
+          nodeBorder: '#AFB8C1',
+          nodeTextColor: '#1F2328',
+          clusterBkg: '#F6F8FA',
+          clusterBorder: '#D0D7DE',
+          edgeLabelBackground: '#FFFFFF',
+          fontFamily: '-apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif',
+          fontSize: '13px',
+        },
+      });
       mermaid = mod.default;
       window.__specmintMermaid = mermaid;
     } catch (e) {
@@ -287,6 +376,15 @@
     document.querySelectorAll('figure.code-diff').forEach((fig) => {
       const lang = (fig.getAttribute('data-language') || 'plaintext')
         .toLowerCase().replace(/[^a-z0-9+-]/g, '');
+      if (lang && lang !== 'plaintext') {
+        const meta = fig.querySelector('.code-diff__meta') || fig.querySelector('figcaption');
+        if (meta && !meta.querySelector(':scope > .code-diff__lang')) {
+          const chip = document.createElement('span');
+          chip.className = 'code-diff__lang';
+          chip.textContent = lang;
+          meta.prepend(chip);
+        }
+      }
       fig.querySelectorAll('pre').forEach((pre) => {
         if (!Array.from(pre.classList).some((c) => /^language-diff(-|$)/.test(c))) {
           Array.from(pre.classList).filter((c) => c.startsWith('language-')).forEach((c) => pre.classList.remove(c));

@@ -236,6 +236,8 @@ small, .small { font-size: 12px; color: var(--text-muted); }
   background: var(--card-bg);
   border-radius: var(--radius);
   padding: var(--space-3) var(--space-4);
+  position: relative;
+  overflow: hidden;
 }
 .scorecard__label {
   font-size: 11px;
@@ -246,6 +248,32 @@ small, .small { font-size: 12px; color: var(--text-muted); }
 }
 .scorecard__value { font-size: 22px; font-weight: 600; line-height: 1; }
 .scorecard__sub { font-size: 12px; color: var(--text-muted); margin-top: var(--space-1); }
+
+/* Auto-injected progress bar inside numeric scorecard cells. */
+.scorecard__bar {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 3px;
+  background: var(--neutral-bg);
+}
+.scorecard__bar::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  width: var(--progress, 0%);
+  background: var(--accent);
+  transition: width 240ms ease, background-color 240ms ease;
+}
+.scorecard__cell[data-progress="complete"] .scorecard__bar::after { background: var(--success); }
+.scorecard__cell[data-progress="empty"] .scorecard__bar::after { background: transparent; }
+
+/* TDD-specific: colour the "Current TDD phase" value to match the RGR pill scheme. */
+.scorecard__cell[data-tdd-phase-value="red"]      .scorecard__value { color: var(--danger);  }
+.scorecard__cell[data-tdd-phase-value="green"]    .scorecard__value { color: var(--success); }
+.scorecard__cell[data-tdd-phase-value="refactor"] .scorecard__value { color: var(--info);    }
+.scorecard__cell[data-tdd-phase-value="red"]      .scorecard__bar::after { background: var(--danger);  }
+.scorecard__cell[data-tdd-phase-value="green"]    .scorecard__bar::after { background: var(--success); }
+.scorecard__cell[data-tdd-phase-value="refactor"] .scorecard__bar::after { background: var(--info);    }
 
 
 /* ─── 6. Status pills / chips ──────────────────────────────────────────────── */
@@ -472,10 +500,38 @@ pre.ascii-diagram {
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   overflow: hidden;
+  position: relative;
 }
 .phase[data-status="completed"] { border-color: var(--success); border-width: 1px; }
 .phase[data-status="in-progress"] { border-color: var(--warning); }
 .phase[data-status="blocked"] { border-color: var(--danger); }
+
+/* Per-phase progress strip across the top edge. --progress is set by spec-runtime.js. */
+.phase::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(
+    to right,
+    var(--accent) 0,
+    var(--accent) var(--progress, 0%),
+    transparent var(--progress, 0%),
+    transparent 100%
+  );
+  z-index: 1;
+  pointer-events: none;
+}
+.phase[data-status="completed"]::before { background: var(--success); }
+.phase[data-status="blocked"]::before {
+  background: linear-gradient(
+    to right,
+    var(--danger) 0,
+    var(--danger) var(--progress, 0%),
+    var(--danger-bg) var(--progress, 0%),
+    var(--danger-bg) 100%
+  );
+}
 
 .phase__header {
   display: flex;
@@ -644,9 +700,39 @@ pre.ascii-diagram {
   font-size: 12.5px;
   line-height: 1.55;
   overflow-x: auto;
+  display: block;
+  width: 100%;
+  white-space: pre;
+  tab-size: 2;
+}
+.code-diff pre > code,
+.code-diff code[class*="language-"] {
+  display: block;
+  width: 100%;
+  white-space: pre;
+  background: transparent;
+  padding: 0;
+  border: 0;
+  font-size: inherit;
 }
 .code-diff .token.inserted { background: var(--success-bg); }
 .code-diff .token.deleted  { background: var(--danger-bg);  }
+
+/* Language chip — injected by spec-runtime.js into .code-diff__meta */
+.code-diff__lang {
+  display: inline-block;
+  text-transform: uppercase;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  padding: 1px 6px;
+  border-radius: var(--radius-sm);
+  background: var(--accent-bg);
+  color: var(--accent);
+  font-weight: 600;
+  font-family: var(--font-sans);
+  margin-right: var(--space-2);
+  vertical-align: middle;
+}
 .code-diff[data-view="split"] pre {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -763,7 +849,7 @@ pre.ascii-diagram {
 
 .wf-text {
   display: block;
-  background: #C9D1D9;
+  background: #A8B3BD;
   border-radius: 3px;
   height: 8px;
   margin: 4px 0;
@@ -787,16 +873,17 @@ pre.ascii-diagram {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: #6E7681;
-  color: #FFFFFF;
+  background: #FFFFFF;
+  color: var(--text);
+  border: 1px solid var(--border-strong);
   border-radius: 4px;
   padding: 6px 14px;
   font-size: 12px;
   font-weight: 500;
-  border: 0;
 }
-.wf-button--primary { background: var(--accent); }
-.wf-button--ghost { background: transparent; border: 1px solid var(--border-strong); color: var(--text); }
+.wf-button--primary { background: var(--accent); color: #FFFFFF; border-color: var(--accent); }
+.wf-button--ghost { background: transparent; border: 1px solid var(--border-strong); color: var(--text-muted); }
+.wf-button--danger { background: var(--danger); color: #FFFFFF; border-color: var(--danger); }
 
 .wf-icon {
   display: inline-block;
@@ -868,6 +955,23 @@ pre.ascii-diagram {
 
 .wf-spacer { height: var(--space-4); }
 .wf-spacer--lg { height: var(--space-8); }
+
+/* Pagination primitive — Prev / page-info / Next on one row. */
+.wf-pagination {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 11.5px;
+  color: var(--text-muted);
+}
+.wf-pagination__info {
+  padding: 2px 8px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background: var(--card-bg);
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
 
 /* Annotation callouts */
 .wf-annotation {
