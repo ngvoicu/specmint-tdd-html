@@ -24,7 +24,7 @@ For architectural context across the Mint family (core vs TDD, distribution, eva
 
   The reference render of a generated `SPEC.html` lives at <https://specmint.io/#gallery> (instead of an embedded screenshot in this repo).
 - `SKILL.md`: universal, cross-tool skill instructions (Codex, Cursor, Windsurf, Cline, Gemini CLI).
-- `specmint-tdd-html-workspace/`: eval scaffold (gitignored). Contains `evals/evals.json` with 8 placeholder TODO evals — not yet runnable.
+- `evals/evals.json`: 6 real eval scenarios with 33 verifiable expectations (tracked). Run via `/skill-creator improve` (Anthropic's official skill-creator plugin) in a fresh Claude Code session. Run outputs land in a gitignored `specmint-tdd-html-workspace/` sibling directory.
 - `.specs/`: local dogfooding output for specs (gitignored).
 
 ## Build, Test, and Development Commands
@@ -73,7 +73,7 @@ This repository has no compile/build pipeline; Markdown, JSON, HTML, CSS, and JS
   - Dogfood the plugin in a disposable consumer project after any visual change and open the generated `SPEC.html` in a browser — pay special attention to the TDD swimlane and TEST-IMPL pair card rendering.
   - Smoke-test install/use flow in a disposable project (with a real test runner available so the implement RGR gates can fire).
 - If you change spec-format rules, update `SKILL.md`, `references/spec-format.md`, and `references/edit-recipes.md` in the same PR.
-- Eval workspace at `specmint-tdd-html-workspace/`: 8 placeholder evals (forge-tdd-html, red-green-refactor, blocking-rule, tests-are-sacred, tdd-log, resume-tdd, asset-init, interleaved-tasks) — assertion bodies are TODO, not yet runnable.
+- `evals/evals.json`: 6 real eval scenarios with 33 verifiable expectations (tracked). Run via `/skill-creator improve` in a fresh Claude Code session; run outputs land in `specmint-tdd-html-workspace/` (gitignored).
 
 ## Commit & Pull Request Guidelines
 

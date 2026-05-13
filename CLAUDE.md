@@ -103,7 +103,16 @@ The plugin has two conceptual layers:
 
 ## Eval Infrastructure
 
-Eval workspace at `specmint-tdd-html-workspace/` (gitignored). Currently contains a **placeholder scaffold** — `specmint-tdd-html-workspace/evals/evals.json` lists 8 evals (forge-tdd-html, red-green-refactor, blocking-rule, tests-are-sacred, tdd-log, resume-tdd, asset-init, interleaved-tasks) with TODO assertion bodies. The structure is in place; the assertion implementations are a follow-up.
+Real evals live at `evals/evals.json` — 6 scenarios with 33 verifiable expectations covering: TDD forge cold-start, resume mid-RGR-cycle, Blocking Rule enforcement, Tests Are Sacred enforcement, Mermaid always-quote rule, TDD Log append-after-cycle.
+
+To run the full benchmark pipeline:
+
+```
+/plugin install skill-creator                    # one-time
+/skill-creator improve                            # in a fresh session, point at this plugin
+```
+
+skill-creator spawns parallel test runs (with-skill + baseline), scores each expectation, and produces a benchmark + diff against any previous iteration. Run results land in a sibling `specmint-tdd-html-workspace/` directory (gitignored).
 
 ## Distribution
 
