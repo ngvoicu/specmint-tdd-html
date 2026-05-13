@@ -299,11 +299,56 @@ It's fine if this takes 2 rounds or 5 rounds. Don't rush it.
 Now synthesize everything — all research notes, all interview answers, all
 decisions — into a `SPEC.html`.
 
-**Start from the canonical template** at `references/html-template.html` —
-copy it to `.specs/<spec-id>/SPEC.html` and fill in every placeholder. Use
-`references/edit-recipes.md` for the exact HTML structure of each element
-(TEST-IMPL pair, TDD log entry, diagram, code-diff, mockup). Reference
-`references/testing-knowledge.md` for testing framework decisions.
+**Author region-by-region — never re-write the whole file.**
+
+Specs can grow to thousands of lines. Re-writing the whole file on every
+change is wasteful, error-prone, and likely to drift mid-file. The
+template ships with every `<!-- region:X -->...<!-- endregion:X -->`
+pair already in place; treat each region body as a separate target that
+you fill with one focused `Edit` call.
+
+**Authoring sequence:**
+
+1. **Copy the template.** `references/html-template.html` →
+   `.specs/<spec-id>/SPEC.html` (one Write call — the only time you
+   write the whole file).
+2. **Edit the `meta` region.** One Edit replaces the single-line
+   `<script id="spec-meta">` JSON with the resolved frontmatter.
+3. **Edit the `header` region.** One Edit fills `<SPEC-TITLE>`,
+   `<SPEC-ID>`, `<YYYY-MM-DD>`, `<TAG1>`, `<FIDELITY>` placeholders.
+4. **For each remaining region in order** — `overview`, `acceptance`,
+   `architecture`, `testing-architecture`, `libraries`, `phases`,
+   `code`, `mockups`, `decisions` — do one focused Edit that replaces
+   the body between the region sentinels with the authored content.
+   Skip `tdd-log` and `deviations` (filled during implementation).
+5. **Read just the relevant reference doc immediately before editing
+   that region**, not all references at once:
+   - Before `phases` (TEST-IMPL pairs) / `acceptance` / `code` →
+     `references/edit-recipes.md`
+   - Before `testing-architecture` → `references/testing-knowledge.md`
+   - Before `architecture` → SKILL.md's Mermaid rules + Phase 5
+     diagram guidelines below
+   - Before `mockups` → `references/mockup-library.md` (hi-fi, the
+     default) or `references/wireframe-library.md` (only if
+     structural-only with no real labels yet)
+   - Before `libraries` → your `research-01.md` / `research-02.md`
+6. **For oversized regions** (50+ TEST-IMPL pairs, 20+ code previews,
+   10+ mockup figures), do **multiple Edits per region** — append one
+   pair / one figure at a time using the previous element as the
+   anchor. Never re-`Write` the whole file. The region sentinels are
+   stable anchors; match them by quoting just enough surrounding
+   context to be unique.
+
+After all regions are filled, run the coherence review and validators
+below before presenting.
+
+The detailed content rules for each region follow. Use
+`references/edit-recipes.md` for the exact HTML structure of each
+element (TEST-IMPL pair, TDD log entry, diagram, code-diff, mockup).
+Reference `references/testing-knowledge.md` for testing framework
+decisions. Use `references/mockup-library.md` (hi-fi, default) and
+`references/wireframe-library.md` (structural-only fallback) for
+mockup patterns.
 
 The spec must include:
 
@@ -388,20 +433,26 @@ The spec must include:
 
     Unified diff by default; `data-view="split"` for changes >30 lines,
     multi-hunk, or where the before/after comparison itself is the point.
-11. **UI Mockups**: One or more `<figure class="mockup">` blocks per the
-    chosen `mockup-fidelity`. Omit the entire section if fidelity is `none`.
+11. **UI Mockups**: One or more `<figure class="mockup mockup--hifi">`
+    blocks by default; reserve `mockup--wireframe` for the rare case
+    where the spec is intentionally structural-only with no real
+    labels yet. Omit the entire section if fidelity is `none`.
 
-    **MUST compose from the `.wf-*` (wireframe) or `.ui-*` (hi-fi)
-    component classes in `assets/spec-styles.css`.** Read
-    `references/wireframe-library.md` or `references/mockup-library.md`
-    before authoring — both contain canonical patterns (App shell, Form,
-    Table page, Modal, Card grid, Dashboard, Empty state, etc.).
+    **Default to hi-fi (`.ui-*`).** Almost every spec has concrete copy
+    (button text, column headers, row data, status badges). The moment
+    you have real text to show, use the `.ui-*` components in
+    `references/mockup-library.md` — they render as real-looking UI.
+
+    The wireframe library (`.wf-*`) is for **empty skeleton bars only**.
+    `.wf-heading`, `.wf-text`, `.wf-pill`, `.wf-input` render correctly
+    only when the tag is empty. Mixing real text inside them produces
+    ugly grey blobs behind the text — switch to `.ui-*` instead.
 
     **Never use ASCII art inside `<figure class="mockup">`** — no boxes
     drawn with `+`, `|`, `-`; no pipe-delimited tables; no monospace
-    pseudo-diagrams. For grids use `.wf-table` (`style="--cols: N;"`)
-    or hi-fi `.ui-table` patterns. For cards use `.wf-card`. Compose
-    new structure from primitives if needed — do not fall back to ASCII.
+    pseudo-diagrams. For grids use `.ui-table` (real `<table>` markup).
+    For cards use `.ui-card`. Compose new structure from primitives if
+    needed — do not fall back to ASCII.
 12. **TDD Log**: Empty region — filled during implementation as cycles
     close. Each entry is a `<article class="tdd-cycle">` with three lanes
     (Red / Green / Refactor).
