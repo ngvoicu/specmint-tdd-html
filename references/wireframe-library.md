@@ -4,6 +4,30 @@ Ready-to-use wireframe patterns built from the `.wf-*` primitives in `spec-style
 
 Wireframes communicate **structure and hierarchy** without committing to visual design. Grayscale boxes, dashed canvas border, optional annotation callouts with SVG arrows.
 
+> ## ⚠️ Hard rule — empty bars only
+>
+> `.wf-heading`, `.wf-text`, `.wf-pill`, `.wf-input` are **empty skeleton bars**. They render as grayscale rectangles when the tag is empty:
+>
+> ```html
+> <span class="wf-heading"></span>     ✅ grey heading bar
+> <span class="wf-text"></span>         ✅ grey body-text bar
+> ```
+>
+> The moment you have real text to show, **you are authoring hi-fi**. Switch the figure to `mockup--hifi` and use the `.ui-*` library (`references/mockup-library.md`) instead:
+>
+> ```html
+> <span class="wf-heading">Sites</span>          ❌ ugly grey blob behind "Sites"
+> <h2 class="ui-card__title">Sites</h2>          ✅ real heading
+>
+> <span class="wf-text">AERE1</span>             ❌ grey strip behind real text
+> <strong>AERE1</strong>                          ✅ real text
+>
+> <span class="wf-pill"></span>                   ✅ empty status placeholder
+> <span class="ui-tag ui-tag--success">active</span>  ✅ real status badge
+> ```
+>
+> Mixing real text inside `.wf-*` primitives is the #1 cause of "ugly grey blob behind text" bug reports.
+
 ## Primitives reference
 
 | Class | Renders as |

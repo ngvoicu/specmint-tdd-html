@@ -715,8 +715,21 @@ pre.ascii-diagram {
   border: 0;
   font-size: inherit;
 }
+/* PrismJS diff-highlight: force each diff line to render full-width and keep
+   a minimum height so empty +/- lines stay visible as a proper row. */
+.code-diff .token.inserted,
+.code-diff .token.deleted {
+  display: block;
+  min-height: 1.55em;
+  padding-left: var(--space-3);
+  margin-left: calc(-1 * var(--space-3));
+  padding-right: var(--space-3);
+  margin-right: calc(-1 * var(--space-3));
+}
 .code-diff .token.inserted { background: var(--success-bg); }
 .code-diff .token.deleted  { background: var(--danger-bg);  }
+.code-diff .token.inserted.prefix,
+.code-diff .token.deleted.prefix { display: inline; padding: 0; margin: 0; min-height: 0; background: transparent; }
 
 /* Language chip — injected by spec-runtime.js into .code-diff__meta */
 .code-diff__lang {
@@ -836,38 +849,63 @@ pre.ascii-diagram {
   gap: var(--space-3);
 }
 
+/* Dual-mode: skeleton bar when empty, real text when content is provided. */
 .wf-heading {
+  display: inline-block;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--text);
+  background: transparent;
+}
+.wf-heading--lg { font-size: 18px; }
+.wf-heading--sm { font-size: 14px; }
+.wf-heading--center { display: block; text-align: center; }
+.wf-heading:empty {
   display: block;
   height: 14px;
   width: 160px;
   background: #6E7681;
   border-radius: 3px;
 }
-.wf-heading--sm { height: 10px; width: 100px; }
-.wf-heading--lg { height: 18px; width: 240px; }
-.wf-heading--center { margin-left: auto; margin-right: auto; }
+.wf-heading--sm:empty { height: 10px; width: 100px; }
+.wf-heading--lg:empty { height: 18px; width: 240px; }
+.wf-heading--center:empty { margin-left: auto; margin-right: auto; }
 
 .wf-text {
+  display: inline-block;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--text);
+  background: transparent;
+  margin: 2px 0;
+}
+.wf-text:empty {
   display: block;
-  background: #A8B3BD;
+  background: #C9D1D9;
   border-radius: 3px;
   height: 8px;
   margin: 4px 0;
 }
-.wf-text:nth-of-type(1) { width: 92%; }
-.wf-text:nth-of-type(2) { width: 78%; }
-.wf-text:nth-of-type(3) { width: 86%; }
-.wf-text:nth-of-type(4) { width: 64%; }
+.wf-text:empty:nth-of-type(1) { width: 92%; }
+.wf-text:empty:nth-of-type(2) { width: 78%; }
+.wf-text:empty:nth-of-type(3) { width: 86%; }
+.wf-text:empty:nth-of-type(4) { width: 64%; }
 
 .wf-input {
   display: block;
-  height: 32px;
+  min-height: 32px;
   background: #FFFFFF;
   border: 1px solid var(--border-strong);
   border-radius: 4px;
   margin: 6px 0;
+  padding: 7px 10px;
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: var(--text);
 }
-.wf-input--label { font-size: 11px; color: var(--text-muted); margin-bottom: 2px; }
+.wf-input:empty { padding: 0; }
+.wf-input--label { display: block; font-size: 11px; color: var(--text-muted); margin-bottom: 2px; }
 
 .wf-button {
   display: inline-flex;
@@ -895,11 +933,23 @@ pre.ascii-diagram {
 .wf-icon--square { border-radius: 4px; }
 
 .wf-pill {
-  display: inline-block;
-  height: 18px;
-  width: 60px;
-  background: #C9D1D9;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 18px;
+  padding: 1px 8px;
+  background: var(--neutral-bg);
+  color: var(--text);
+  border: 1px solid var(--border-subtle);
   border-radius: 9px;
+  font-size: 11.5px;
+  line-height: 1.4;
+}
+.wf-pill:empty {
+  width: 60px;
+  padding: 0;
+  background: #C9D1D9;
+  border-color: transparent;
 }
 
 .wf-divider { height: 1px; background: var(--border-subtle); margin: var(--space-3) 0; }

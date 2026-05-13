@@ -695,23 +695,35 @@ The spec must include:
 
   Unified diff by default; `data-view="split"` for changes >30 lines,
   multi-hunk, or where the before/after comparison itself is the point.
-- **UI Mockups** (omit entirely if `mockup-fidelity: none`) — wireframe
-  or hi-fi `<figure class="mockup">` blocks per the chosen fidelity.
+- **UI Mockups** (omit entirely if `mockup-fidelity: none`) — hi-fi
+  `<figure class="mockup mockup--hifi">` blocks by default; reserve
+  `mockup--wireframe` for the rare case where the spec is intentionally
+  structural-only with no real labels yet.
 
-  **MUST compose from the `.wf-*` (wireframe) or `.ui-*` (hi-fi)
-  component classes in `assets/spec-styles.css`.** Before authoring,
-  **read `references/wireframe-library.md`** (App shell, Form, Empty
-  state, Table page, Modal, Stepper, Detail/master, Settings panel,
-  Card grid) or **`references/mockup-library.md`** (Login, Dashboard,
-  Data table, Modal, Toast, Validation form, Wizard, Alert+tabs,
-  Settings, Card grid).
+  **Default to hi-fi.** Almost every spec has concrete copy. The moment
+  you have real text to show (button label, column header, status,
+  placeholder), use the `.ui-*` components in
+  `references/mockup-library.md` — they render as real-looking UI.
+
+  **The wireframe library (`.wf-*`) is for empty skeletons only.**
+  `.wf-heading`, `.wf-text`, `.wf-pill`, `.wf-input` are skeleton
+  bars; they render correctly only when the tag is empty. If you have
+  real content, switch that block to `.ui-*`. Mixing real text inside
+  `.wf-text` / `.wf-heading` is the #1 cause of "ugly grey blob behind
+  text" bug reports.
+
+  Read `references/mockup-library.md` (`.ui-*` patterns: Login,
+  Dashboard, Data table, Modal, Toast, Validation form, Wizard,
+  Alert+tabs, Settings, Card grid) before authoring.
+  `references/wireframe-library.md` is the fallback for
+  structural-only sketches.
 
   **Never use ASCII art inside `<figure class="mockup">`** — no boxes
   drawn with `+`, `|`, `-`; no pipe-delimited tables; no monospace
-  pseudo-diagrams. For grids use `.wf-table` (`style="--cols: N;"`)
-  or hi-fi `.ui-table` patterns. For cards use `.wf-card`. Compose new
-  structure from primitives if needed — do **not** fall back to ASCII.
-  The runtime validator flags ASCII inside mockup figures.
+  pseudo-diagrams. For grids use `.ui-table` (real `<table>` markup).
+  For cards use `.ui-card`. Compose new structure from primitives if
+  needed — do **not** fall back to ASCII. The runtime validator flags
+  ASCII inside mockup figures.
 - **Decision Log** — initially populated with key decisions from interviews
 - **TDD Log** (empty at forge time — filled during implementation as cycles close)
 - **Deviations** (empty at forge time)
