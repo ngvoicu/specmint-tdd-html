@@ -263,6 +263,38 @@ Inside `<section id="code">`. Use unified format by default; add `data-view="spl
 
 `-` lines render with red background, `+` lines with green, both syntax-highlighted by PrismJS `diff-highlight` plugin.
 
+### CRITICAL: escape HTML inside `<pre><code>`
+
+`<pre><code>` is **not** a raw-text element in HTML5. Any `<`, `>`, or `&` inside the code body is parsed as markup. Unescaped Java/TS generics (`List<Object>`), JSX tags (`<Foo />`), shell redirects (`>>`), or `&&` operators silently corrupt the DOM — the browser swallows everything up to the next matching close tag, dropping later figures and entire sections. The validator reports this as `region/endregion mismatch — unclosed: [code]`.
+
+Inside every `<pre><code>…</code></pre>` body, replace:
+
+| Char | Entity |
+|---|---|
+| `&` | `&amp;` (do this first, otherwise you double-escape the entities below) |
+| `<` | `&lt;` |
+| `>` | `&gt;` |
+
+**Wrong** (corrupts the DOM — `<Object>` and `<String, String>` become bogus tags):
+
+```html
+<pre class="language-diff-java diff-highlight"><code>     List<Object> args = new ArrayList<>();
+-    Map<String, String> macros = repo.find(site, locale);
++    return repo.find(site, locale);
+</code></pre>
+```
+
+**Right** (entity-escaped, renders identically, parses safely):
+
+```html
+<pre class="language-diff-java diff-highlight"><code>     List&lt;Object&gt; args = new ArrayList&lt;&gt;();
+-    Map&lt;String, String&gt; macros = repo.find(site, locale);
++    return repo.find(site, locale);
+</code></pre>
+```
+
+The `-` / `+` diff prefixes, whitespace, and PrismJS highlighting are unaffected by the escaping. Only the body text is escaped — leave `<pre>`, `<code>`, and their attributes alone.
+
 ---
 
 ## Add a wireframe mockup

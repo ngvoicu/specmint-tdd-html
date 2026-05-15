@@ -654,6 +654,35 @@
       });
     });
 
+    // 9. Unescaped HTML special chars inside <pre><code> code blocks.
+    //    <pre><code> is NOT a raw-text element in HTML5; unescaped "<", ">",
+    //    "&" in the source are parsed as markup. Common AI authoring bug:
+    //    pasting Java/TS generics (List<Object>), JSX (<Foo />), shell
+    //    redirects (>>) or "&&" operators creates bogus child elements that
+    //    silently swallow downstream <figure> / <section> content (often
+    //    surfaces upstream as a region/endregion mismatch in check 2). Fix
+    //    by replacing "<" with "&lt;", ">" with "&gt;", "&" with "&amp;" in
+    //    the code body. See edit-recipes.md "CRITICAL: escape HTML inside
+    //    <pre><code>".
+    document.querySelectorAll('pre > code').forEach((code) => {
+      const bogus = new Set();
+      // PrismJS wraps tokens in <span class="token …">. Anything else inside
+      // <pre><code> almost certainly came from unescaped angle brackets.
+      code.querySelectorAll('*').forEach((el) => {
+        if (el.tagName !== 'SPAN') bogus.add(el.tagName.toLowerCase());
+      });
+      if (bogus.size) {
+        const fig = code.closest('figure');
+        const cap = fig && fig.querySelector('figcaption');
+        const tag = cap ? `"${cap.textContent.trim().slice(0, 80)}"` : '(uncaptioned)';
+        issues.push({
+          area: 'code',
+          level: 'error',
+          msg: `Unescaped angle bracket(s) inside <pre><code> in ${tag} — parser created bogus element(s) [${[...bogus].join(', ')}]. Replace "<" / ">" / "&" with "&lt;" / "&gt;" / "&amp;" in the code body.`,
+        });
+      }
+    });
+
     // Reporting
     const errors = issues.filter((i) => i.level === 'error').length;
     const warnings = issues.filter((i) => i.level === 'warn').length;
