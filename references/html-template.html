@@ -103,12 +103,15 @@
       </div>
       <span class="progress progress--strip mb-3" data-progress-bar="ac" aria-hidden="true"></span>
       <ul class="ac-list">
+        <!--
+          Canonical AC item shape — checkbox is CSS-generated, do NOT add a
+          <span class="ac-check"> in markup. The only required child is
+          <span class="ac-text">. State lives in data-status on the <li>.
+        -->
         <li class="ac-item" id="ac-1" data-ac="1" data-status="pending">
-          <span class="ac-check"></span>
           <span class="ac-text"><!-- testable condition --></span>
         </li>
         <li class="ac-item" id="ac-N" data-ac="N" data-status="pending">
-          <span class="ac-check"></span>
           <span class="ac-text">Every behavior above has a corresponding red-green-refactor cycle in the TDD Log.</span>
         </li>
       </ul>
@@ -201,16 +204,20 @@ flowchart LR
           <div class="phase__body">
             <span class="progress progress--strip mb-3" data-progress-bar="phase-1" aria-hidden="true"></span>
             <ul class="task-list">
+              <!--
+                Canonical task shape — checkbox is CSS-generated, do NOT add a
+                <span class="task__check"> in markup. Required children are
+                .task__code and .task__text; .task__tags and .task__rgr are
+                optional. State lives in data-status on the <li>.
+              -->
               <li class="task-pair">
                 <ol class="task-list" style="margin:0;">
                   <li class="task task--test" id="task-TEST-<PREFIX>-01" data-task="TEST-<PREFIX>-01" data-status="pending">
-                    <span class="task__check"></span>
                     <span class="task__code">TEST-<PREFIX>-01</span>
                     <span class="task__text"><!-- Write tests for ... — file path, assertions, isolation --></span>
                     <span class="task__rgr task__rgr--red">RED</span>
                   </li>
                   <li class="task task--impl" id="task-IMPL-<PREFIX>-02" data-task="IMPL-<PREFIX>-02" data-status="pending">
-                    <span class="task__check"></span>
                     <span class="task__code">IMPL-<PREFIX>-02</span>
                     <span class="task__text"><!-- Implement ... in src/... --> &rarr; satisfies <code>[TEST-<PREFIX>-01]</code>.</span>
                   </li>

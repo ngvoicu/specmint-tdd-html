@@ -82,10 +82,11 @@ Two changes: `data-status` attribute AND the visible pill class+text.
 
 Insert as the last `<li>` inside the phase's `<ul class="task-list">`. Task code = next number after the highest task in the spec (numbers are continuous across all phases, not per-phase).
 
+The checkbox is **CSS-generated** — do NOT add a `<span class="task__check">` in markup. Required children are `.task__code` and `.task__text`; `.task__tags` and `.task__rgr` are optional. The `data-status` on the `<li>` drives the checkbox state (pending / completed / blocked).
+
 ```html
 <!-- Before -->
               <li class="task" id="task-INV-07" data-task="INV-07" data-status="pending">
-                <span class="task__check"></span>
                 <span class="task__code">INV-07</span>
                 <span class="task__text">Last existing task</span>
               </li>
@@ -94,12 +95,10 @@ Insert as the last `<li>` inside the phase's `<ul class="task-list">`. Task code
 ```html
 <!-- After -->
               <li class="task" id="task-INV-07" data-task="INV-07" data-status="pending">
-                <span class="task__check"></span>
                 <span class="task__code">INV-07</span>
                 <span class="task__text">Last existing task</span>
               </li>
               <li class="task" id="task-INV-08" data-task="INV-08" data-status="pending">
-                <span class="task__check"></span>
                 <span class="task__code">INV-08</span>
                 <span class="task__text">New task description with <code>file.ts</code> ref</span>
                 <span class="task__tags"><span class="task__tag">#tag</span></span>
@@ -133,7 +132,6 @@ Insert a new `<details class="phase">` block inside `<div class="phases">`. Phas
           <div class="phase__body">
             <ul class="task-list">
               <li class="task" id="task-INV-09" data-task="INV-09" data-status="pending">
-                <span class="task__check"></span>
                 <span class="task__code">INV-09</span>
                 <span class="task__text">Task description</span>
               </li>
@@ -164,10 +162,11 @@ Insert a new `<details class="phase">` block inside `<div class="phases">`. Phas
 
 Insert at the end of `<ul class="ac-list">` with the next `ac-N` id.
 
+The checkbox is **CSS-generated** — do NOT add a `<span class="ac-check">` in markup. The only required child of `.ac-item` is `<span class="ac-text">`. The `data-status` on the `<li>` drives both the checkbox state and the strikethrough.
+
 ```html
 <!-- Before -->
         <li class="ac-item" id="ac-5" data-ac="5" data-status="pending">
-          <span class="ac-check"></span>
           <span class="ac-text">Last existing AC</span>
         </li>
       </ul>
@@ -175,11 +174,9 @@ Insert at the end of `<ul class="ac-list">` with the next `ac-N` id.
 ```html
 <!-- After -->
         <li class="ac-item" id="ac-5" data-ac="5" data-status="pending">
-          <span class="ac-check"></span>
           <span class="ac-text">Last existing AC</span>
         </li>
         <li class="ac-item" id="ac-6" data-ac="6" data-status="pending">
-          <span class="ac-check"></span>
           <span class="ac-text">New acceptance criterion text</span>
         </li>
       </ul>
@@ -444,7 +441,6 @@ Append a new `<li class="task-pair">` to the phase's `<ul class="task-list">`. T
                       id="task-TEST-RL-05"
                       data-task="TEST-RL-05"
                       data-status="pending">
-                    <span class="task__check"></span>
                     <span class="task__code">TEST-RL-05</span>
                     <span class="task__text">Write tests for ...</span>
                     <span class="task__rgr task__rgr--red">RED</span>
@@ -453,7 +449,6 @@ Append a new `<li class="task-pair">` to the phase's `<ul class="task-list">`. T
                       id="task-IMPL-RL-06"
                       data-task="IMPL-RL-06"
                       data-status="pending">
-                    <span class="task__check"></span>
                     <span class="task__code">IMPL-RL-06</span>
                     <span class="task__text">Implement ... &rarr; satisfies <code>[TEST-RL-05]</code>.</span>
                   </li>
