@@ -309,13 +309,14 @@ small, .small { font-size: 12px; color: var(--text-muted); }
 .chip {
   display: inline-flex;
   align-items: center;
-  padding: 1px 7px;
-  font-size: 11.5px;
+  padding: 1px 8px;
+  font-size: 11px;
+  font-weight: 500;
   border-radius: var(--radius-sm);
-  background: var(--subtle-bg);
+  background: var(--neutral-bg);
   border: 1px solid var(--border-subtle);
-  color: var(--text-muted);
-  font-family: var(--font-mono);
+  color: var(--neutral);
+  font-family: var(--font-sans);
 }
 
 
@@ -622,12 +623,14 @@ pre.ascii-diagram {
 .task[data-status="completed"] .task__text { color: var(--text-muted); }
 .task__tags { grid-area: tags; display: flex; gap: var(--space-1); }
 .task__tag {
-  font-size: 11px;
-  font-family: var(--font-mono);
-  color: var(--text-muted);
-  background: var(--subtle-bg);
+  font-size: 10.5px;
+  font-weight: 500;
+  font-family: var(--font-sans);
+  color: var(--neutral);
+  background: var(--neutral-bg);
   padding: 1px 6px;
   border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
 }
 
 
@@ -679,6 +682,7 @@ pre.ascii-diagram {
   border-radius: var(--radius);
   overflow: hidden;
   background: var(--card-bg);
+  box-shadow: var(--shadow-sm);
 }
 .code-diff > figcaption {
   display: flex;
@@ -687,9 +691,10 @@ pre.ascii-diagram {
   background: var(--subtle-bg);
   border-bottom: 1px solid var(--border-subtle);
   padding: var(--space-2) var(--space-4);
-  font-family: var(--font-mono);
-  font-size: 12.5px;
-  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted);
 }
 .code-diff > figcaption::before {
   content: "▸";
@@ -706,7 +711,7 @@ pre.ascii-diagram {
   padding: var(--space-3) var(--space-4);
   background: var(--card-bg);
   font-size: 12.5px;
-  line-height: 1.55;
+  line-height: 1.6;
   overflow-x: auto;
   display: block;
   width: 100%;
@@ -715,42 +720,61 @@ pre.ascii-diagram {
 }
 .code-diff pre > code,
 .code-diff code[class*="language-"] {
-  display: block;
-  width: 100%;
+  display: inline-block;
+  min-width: 100%;
   white-space: pre;
   background: transparent;
   padding: 0;
   border: 0;
   font-size: inherit;
 }
+
+/* Base line styling for both changed and unchanged lines */
+.code-diff .token.inserted,
+.code-diff .token.deleted,
+.code-diff pre > code > span:not(.token) {
+  display: block;
+  width: 100%;
+  padding: 0 var(--space-4);
+}
 /* PrismJS diff-highlight: force each diff line to render full-width and keep
    a minimum height so empty +/- lines stay visible as a proper row. */
 .code-diff .token.inserted,
 .code-diff .token.deleted {
   display: block;
-  min-height: 1.55em;
-  padding-left: var(--space-3);
-  margin-left: calc(-1 * var(--space-3));
-  padding-right: var(--space-3);
-  margin-right: calc(-1 * var(--space-3));
+  min-height: 1.6em;
+  padding: 0 var(--space-4);
+  margin: 0 calc(-1 * var(--space-4));
+  position: relative;
 }
-.code-diff .token.inserted { background: var(--success-bg); }
-.code-diff .token.deleted  { background: var(--danger-bg);  }
+.code-diff .token.inserted { 
+  background: rgba(26, 127, 55, 0.08); 
+  box-shadow: inset 3px 0 0 var(--success);
+}
+.code-diff .token.deleted  { 
+  background: rgba(207, 34, 46, 0.08); 
+  box-shadow: inset 3px 0 0 var(--danger);
+}
 .code-diff .token.inserted.prefix,
-.code-diff .token.deleted.prefix { display: inline; padding: 0; margin: 0; min-height: 0; background: transparent; }
+.code-diff .token.deleted.prefix { 
+  display: inline-block; 
+  width: 1.2em;
+  opacity: 0.5;
+  user-select: none;
+}
 
 /* Language chip — injected by spec-runtime.js into .code-diff__meta */
 .code-diff__lang {
   display: inline-block;
   text-transform: uppercase;
   font-size: 10px;
-  letter-spacing: 0.04em;
+  font-weight: 700;
+  letter-spacing: 0.05em;
   padding: 1px 6px;
   border-radius: var(--radius-sm);
-  background: var(--accent-bg);
-  color: var(--accent);
-  font-weight: 600;
-  font-family: var(--font-sans);
+  background: var(--neutral-bg);
+  color: var(--neutral);
+  border: 1px solid var(--border-subtle);
   margin-right: var(--space-2);
   vertical-align: middle;
 }
@@ -1400,11 +1424,11 @@ svg.wf-arrow-overlay {
   color: var(--text);
   background: transparent;
 }
-.lane--red { background: rgba(207,34,46,0.04); }
+.lane--red { background: rgba(207,34,46,0.08); box-shadow: inset 3px 0 0 var(--danger); }
 .lane--red .lane__title { color: var(--danger); }
-.lane--green { background: rgba(26,127,55,0.04); }
+.lane--green { background: rgba(26,127,55,0.08); box-shadow: inset 3px 0 0 var(--success); }
 .lane--green .lane__title { color: var(--success); }
-.lane--refactor { background: rgba(9,105,218,0.04); }
+.lane--refactor { background: rgba(9,105,218,0.08); box-shadow: inset 3px 0 0 var(--info); }
 .lane--refactor .lane__title { color: var(--info); }
 
 @media (max-width: 800px) {
