@@ -415,15 +415,10 @@
     loadNext();
   }
 
-  function renderDiffBlock(block) {
-    const { fig, pre, raw, lang, view } = block;
+  function parseDiffLines(raw) {
     const lines = raw.replace(/\n$/, '').split('\n');
-
-    const container = document.createElement('div');
-    container.className = `diff-rows diff-rows--${view}`;
-
-    let lineNum = 1;
-    lines.forEach((line) => {
+    let oldNum = 1, newNum = 1;
+    return lines.map((line) => {
       let type, content;
       const head = line[0];
       if (head === '+') {
@@ -433,45 +428,105 @@
         type = 'removed';
         content = line.length > 1 && line[1] === ' ' ? line.slice(2) : line.slice(1);
       } else if (head === ' ') {
-        // Two leading spaces = context; strip them so the code lines up.
-        content = line.length > 1 && line[1] === ' ' ? line.slice(2) : line.slice(1);
         type = 'context';
+        content = line.length > 1 && line[1] === ' ' ? line.slice(2) : line.slice(1);
       } else if (line === '') {
         type = 'context'; content = '';
       } else {
-        // No prefix at all — treat as context, render verbatim.
         type = 'context'; content = line;
       }
-
-      const row = document.createElement('div');
-      row.className = `diff-row diff-row--${type}`;
-
-      const numEl = document.createElement('span');
-      numEl.className = 'diff-num';
-      numEl.textContent = String(lineNum++);
-      numEl.setAttribute('aria-hidden', 'true');
-
-      const signEl = document.createElement('span');
-      signEl.className = 'diff-sign';
-      signEl.textContent = type === 'added' ? '+' : type === 'removed' ? '-' : ' ';
-      signEl.setAttribute('aria-hidden', 'true');
-
-      const codeEl = document.createElement('span');
-      codeEl.className = 'diff-code';
-      const grammar = window.Prism && window.Prism.languages && window.Prism.languages[lang];
-      if (grammar) {
-        try {
-          codeEl.innerHTML = window.Prism.highlight(content, grammar, lang);
-        } catch (e) {
-          codeEl.textContent = content;
-        }
-      } else {
-        codeEl.textContent = content;
-      }
-
-      row.append(numEl, signEl, codeEl);
-      container.appendChild(row);
+      const rec = { type, content, oldNum: null, newNum: null };
+      if (type === 'added') rec.newNum = newNum++;
+      else if (type === 'removed') rec.oldNum = oldNum++;
+      else { rec.oldNum = oldNum++; rec.newNum = newNum++; }
+      return rec;
     });
+  }
+
+  function buildDiffCell(rec, lang) {
+    const cell = document.createElement('div');
+    cell.className = `diff-cell diff-cell--${rec.type}`;
+
+    const numEl = document.createElement('span');
+    numEl.className = 'diff-num';
+    numEl.textContent = String(rec.type === 'added' ? rec.newNum : rec.oldNum);
+    numEl.setAttribute('aria-hidden', 'true');
+
+    const signEl = document.createElement('span');
+    signEl.className = 'diff-sign';
+    signEl.textContent = rec.type === 'added' ? '+' : rec.type === 'removed' ? '-' : ' ';
+    signEl.setAttribute('aria-hidden', 'true');
+
+    const codeEl = document.createElement('span');
+    codeEl.className = 'diff-code';
+    const grammar = window.Prism && window.Prism.languages && window.Prism.languages[lang];
+    if (grammar) {
+      try {
+        codeEl.innerHTML = window.Prism.highlight(rec.content, grammar, lang);
+      } catch (e) {
+        codeEl.textContent = rec.content;
+      }
+    } else {
+      codeEl.textContent = rec.content;
+    }
+
+    cell.append(numEl, signEl, codeEl);
+    return cell;
+  }
+
+  function buildEmptyCell(side) {
+    const cell = document.createElement('div');
+    cell.className = `diff-cell diff-cell--empty diff-cell--empty-${side}`;
+    cell.setAttribute('aria-hidden', 'true');
+    return cell;
+  }
+
+  function renderDiffBlock(block) {
+    const { pre, raw, lang, view } = block;
+    const records = parseDiffLines(raw);
+
+    const container = document.createElement('div');
+    container.className = `diff-rows diff-rows--${view}`;
+
+    if (view === 'split') {
+      // Group consecutive removed+added into "change hunks" so we can pair
+      // them left/right with empty placeholders for unequal counts. Context
+      // lines flush any pending hunk and render as a full-width row.
+      const runs = [];
+      let change = null;
+      const flush = () => { if (change) { runs.push(change); change = null; } };
+      for (const rec of records) {
+        if (rec.type === 'context') {
+          flush();
+          runs.push({ kind: 'context', record: rec });
+        } else {
+          if (!change) change = { kind: 'change', removed: [], added: [] };
+          (rec.type === 'removed' ? change.removed : change.added).push(rec);
+        }
+      }
+      flush();
+
+      runs.forEach((run) => {
+        if (run.kind === 'context') {
+          const pair = document.createElement('div');
+          pair.className = 'diff-pair diff-pair--context';
+          pair.appendChild(buildDiffCell(run.record, lang));
+          container.appendChild(pair);
+          return;
+        }
+        const max = Math.max(run.removed.length, run.added.length);
+        for (let i = 0; i < max; i++) {
+          const pair = document.createElement('div');
+          pair.className = 'diff-pair diff-pair--change';
+          pair.appendChild(run.removed[i] ? buildDiffCell(run.removed[i], lang) : buildEmptyCell('removed'));
+          pair.appendChild(run.added[i] ? buildDiffCell(run.added[i], lang) : buildEmptyCell('added'));
+          container.appendChild(pair);
+        }
+      });
+    } else {
+      // Unified — one cell per record, single column.
+      records.forEach((rec) => container.appendChild(buildDiffCell(rec, lang)));
+    }
 
     // Replace the pre's content with the row container. Strip language-diff-*
     // and diff-highlight classes so any leftover Prism logic skips this <pre>.

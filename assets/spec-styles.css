@@ -742,18 +742,26 @@ pre.ascii-diagram {
   color: var(--text);
 }
 
-/* Row container — populated by mountDiffs() */
+/* Rows container — populated by mountDiffs(). For unified view the container
+ * is a vertical stack of .diff-cell rows. For split view it's a stack of
+ * .diff-pair rows, each pair holds either one full-width context cell or two
+ * half-width cells (removed on the left, added on the right; empty placeholder
+ * cell when one side is shorter). */
 .code-diff .diff-rows {
   display: block;
   min-width: max-content;
   font-family: var(--font-mono);
   tab-size: 2;
 }
-.code-diff .diff-row {
+
+/* A single line of diff content — [num][sign][code]. Used inside both
+ * unified rows and the two halves of a split pair. */
+.code-diff .diff-cell {
   display: grid;
-  grid-template-columns: 3em 1.5em 1fr;
+  grid-template-columns: 3em 1.5em minmax(0, 1fr);
   align-items: stretch;
   white-space: pre;
+  min-height: 1.6em;
 }
 .code-diff .diff-num {
   text-align: right;
@@ -777,27 +785,36 @@ pre.ascii-diagram {
   overflow: visible;
   color: var(--text);
 }
-.code-diff .diff-row--added {
+.code-diff .diff-cell--added {
   background: rgba(46, 160, 67, 0.15);
 }
-.code-diff .diff-row--added .diff-sign {
+.code-diff .diff-cell--added .diff-sign {
   color: #1a7f37;
 }
-.code-diff .diff-row--added .diff-num {
+.code-diff .diff-cell--added .diff-num {
   background: rgba(46, 160, 67, 0.22);
   color: #1a7f37;
   border-right-color: rgba(46, 160, 67, 0.35);
 }
-.code-diff .diff-row--removed {
+.code-diff .diff-cell--removed {
   background: rgba(248, 81, 73, 0.15);
 }
-.code-diff .diff-row--removed .diff-sign {
+.code-diff .diff-cell--removed .diff-sign {
   color: #cf222e;
 }
-.code-diff .diff-row--removed .diff-num {
+.code-diff .diff-cell--removed .diff-num {
   background: rgba(248, 81, 73, 0.22);
   color: #cf222e;
   border-right-color: rgba(248, 81, 73, 0.35);
+}
+.code-diff .diff-cell--empty {
+  background: repeating-linear-gradient(
+    -45deg,
+    transparent 0,
+    transparent 6px,
+    rgba(0, 0, 0, 0.025) 6px,
+    rgba(0, 0, 0, 0.025) 12px
+  );
 }
 
 /* Language chip — injected by spec-runtime.js into .code-diff__meta */
@@ -816,24 +833,24 @@ pre.ascii-diagram {
   vertical-align: middle;
 }
 
-/* Split view — removed rows go left, added rows go right, context spans. */
-.code-diff[data-view="split"] .diff-rows {
+/* Split view — each .diff-pair is one logical line position. Change pairs
+ * have two cells side-by-side; context pairs have one full-width cell.
+ * mountDiffs() pre-pairs removed+added so each row's left and right are
+ * aligned (with empty placeholder cells where one side is shorter). */
+.code-diff[data-view="split"] .diff-pair {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  min-width: 0;
 }
-.code-diff[data-view="split"] .diff-row--removed {
-  grid-column: 1;
+.code-diff[data-view="split"] .diff-pair--change {
+  grid-template-columns: 1fr 1fr;
+}
+.code-diff[data-view="split"] .diff-pair--change > .diff-cell:first-child {
   border-right: 1px solid var(--border-subtle);
 }
-.code-diff[data-view="split"] .diff-row--added {
-  grid-column: 2;
+.code-diff[data-view="split"] .diff-pair--context {
+  grid-template-columns: 1fr;
 }
-.code-diff[data-view="split"] .diff-row--context {
-  grid-column: 1 / 3;
-}
-.code-diff[data-view="split"] .diff-row {
-  grid-template-columns: 2.5em 1.25em 1fr;
+.code-diff[data-view="split"] .diff-cell {
+  grid-template-columns: 2.5em 1.25em minmax(0, 1fr);
 }
 
 
