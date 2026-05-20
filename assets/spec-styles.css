@@ -675,6 +675,18 @@ pre.ascii-diagram {
 
 
 /* ─── 13. Code-diff figures ───────────────────────────────────────────────── */
+/* Authoring contract:
+ *   <figure class="code-diff" data-view="unified|split">
+ *     <figcaption>…</figcaption>
+ *     <pre class="language-diff-LANG diff-highlight"><code>
+ *       + added line
+ *       - removed line
+ *         context line   (leading two spaces required)
+ *     </code></pre>
+ *   </figure>
+ * spec-runtime.js:mountDiffs() rewrites the <pre> at load time into a
+ * row-based grid; the rules below style that rewritten DOM.
+ */
 
 .code-diff {
   margin: var(--space-4) 0;
@@ -708,59 +720,84 @@ pre.ascii-diagram {
 }
 .code-diff pre {
   margin: 0;
-  padding: var(--space-3) var(--space-4);
+  padding: 0;
   background: var(--card-bg);
   font-size: 12.5px;
   line-height: 1.6;
   overflow-x: auto;
   display: block;
   width: 100%;
-  white-space: pre;
-  tab-size: 2;
 }
-.code-diff pre > code,
-.code-diff code[class*="language-"] {
-  display: inline-block;
-  min-width: 100%;
+/* Pre-render fallback: until mountDiffs() rewrites the <pre>, the raw
+ * <code> still sits there. Keep it as plain monospace so users don't see
+ * a styling pop. */
+.code-diff pre > code {
+  display: block;
+  padding: var(--space-3) var(--space-4);
   white-space: pre;
   background: transparent;
-  padding: 0;
   border: 0;
+  font-family: var(--font-mono);
   font-size: inherit;
+  color: var(--text);
 }
 
-/* Base line styling for both changed and unchanged lines */
-.code-diff .token.inserted,
-.code-diff .token.deleted,
-.code-diff pre > code > span:not(.token) {
+/* Row container — populated by mountDiffs() */
+.code-diff .diff-rows {
   display: block;
-  width: 100%;
-  padding: 0 var(--space-4);
+  min-width: max-content;
+  font-family: var(--font-mono);
+  tab-size: 2;
 }
-/* PrismJS diff-highlight: force each diff line to render full-width and keep
-   a minimum height so empty +/- lines stay visible as a proper row. */
-.code-diff .token.inserted,
-.code-diff .token.deleted {
-  display: block;
-  min-height: 1.6em;
-  padding: 0 var(--space-4);
-  margin: 0 calc(-1 * var(--space-4));
-  position: relative;
+.code-diff .diff-row {
+  display: grid;
+  grid-template-columns: 3em 1.5em 1fr;
+  align-items: stretch;
+  white-space: pre;
 }
-.code-diff .token.inserted { 
-  background: rgba(26, 127, 55, 0.08); 
-  box-shadow: inset 3px 0 0 var(--success);
-}
-.code-diff .token.deleted  { 
-  background: rgba(207, 34, 46, 0.08); 
-  box-shadow: inset 3px 0 0 var(--danger);
-}
-.code-diff .token.inserted.prefix,
-.code-diff .token.deleted.prefix { 
-  display: inline-block; 
-  width: 1.2em;
-  opacity: 0.5;
+.code-diff .diff-num {
+  text-align: right;
+  padding: 0 var(--space-2);
+  color: var(--text-muted);
+  background: var(--subtle-bg);
+  border-right: 1px solid var(--border-subtle);
   user-select: none;
+  font-variant-numeric: tabular-nums;
+  font-size: 11px;
+  line-height: 1.6;
+}
+.code-diff .diff-sign {
+  text-align: center;
+  user-select: none;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+.code-diff .diff-code {
+  padding: 0 var(--space-3);
+  overflow: visible;
+  color: var(--text);
+}
+.code-diff .diff-row--added {
+  background: rgba(46, 160, 67, 0.15);
+}
+.code-diff .diff-row--added .diff-sign {
+  color: #1a7f37;
+}
+.code-diff .diff-row--added .diff-num {
+  background: rgba(46, 160, 67, 0.22);
+  color: #1a7f37;
+  border-right-color: rgba(46, 160, 67, 0.35);
+}
+.code-diff .diff-row--removed {
+  background: rgba(248, 81, 73, 0.15);
+}
+.code-diff .diff-row--removed .diff-sign {
+  color: #cf222e;
+}
+.code-diff .diff-row--removed .diff-num {
+  background: rgba(248, 81, 73, 0.22);
+  color: #cf222e;
+  border-right-color: rgba(248, 81, 73, 0.35);
 }
 
 /* Language chip — injected by spec-runtime.js into .code-diff__meta */
@@ -778,14 +815,26 @@ pre.ascii-diagram {
   margin-right: var(--space-2);
   vertical-align: middle;
 }
-.code-diff[data-view="split"] pre {
+
+/* Split view — removed rows go left, added rows go right, context spans. */
+.code-diff[data-view="split"] .diff-rows {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 0;
+  min-width: 0;
 }
-.code-diff[data-view="split"] .diff-side { padding: var(--space-3); }
-.code-diff[data-view="split"] .diff-side--old { background: rgba(207,34,46,0.04); border-right: 1px solid var(--border-subtle); }
-.code-diff[data-view="split"] .diff-side--new { background: rgba(26,127,55,0.04); }
+.code-diff[data-view="split"] .diff-row--removed {
+  grid-column: 1;
+  border-right: 1px solid var(--border-subtle);
+}
+.code-diff[data-view="split"] .diff-row--added {
+  grid-column: 2;
+}
+.code-diff[data-view="split"] .diff-row--context {
+  grid-column: 1 / 3;
+}
+.code-diff[data-view="split"] .diff-row {
+  grid-template-columns: 2.5em 1.25em 1fr;
+}
 
 
 /* ─── 14. Mockup chrome ───────────────────────────────────────────────────── */

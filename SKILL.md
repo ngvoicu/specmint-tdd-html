@@ -604,10 +604,36 @@ The spec must include:
      form. Wrap every label.
 
   4. **ALWAYS quote `flowchart` node labels that aren't pure identifiers.**
+     The square / curly brackets define the node shape; the **content**
+     between them must be quoted whenever it contains anything outside
+     `[A-Za-z0-9 _.-]`. Yes, that includes `/`, `(`, `)`, `,`, `;`, `:`,
+     `+`, `=`, `<`, `>`, `[`, `]`, `—` (em dash), and `<br/>`.
+
+     The CLI validate gate (`references/validate.md`) **rejects** any
+     `<pre class="mermaid">` block with an unquoted label that uses
+     forbidden chars. It runs after every edit; you cannot ship past it.
+
+     Common offenders the validator has caught:
+     - `API[/api/foo/]` — slashes (and the trapezoid `[/…/]` shape eats
+       the inner slashes). Fix: `API["/api/foo"]`.
+     - `PAGE[app/(app)/page.tsx]` — slash + parens. Fix:
+       `PAGE["app/(app)/page.tsx"]`.
+     - `DTO[Foo[]<br/>bar]` — `[]` + `<br/>`. Fix: `DTO["Foo[]<br/>bar"]`.
+     - `CAPSULE[group/capsule]` — slash. Fix: `CAPSULE["group/capsule"]`.
+     - `subgraph INS[components/insight/heatmap/]` — slashes inside a
+       subgraph title. Fix: `subgraph INS["components/insight/heatmap/"]`.
+     - `BEFORE[Before — selector machinery]` — em dash. Fix:
+       `BEFORE["Before — selector machinery"]`.
+
+     The cylinder shape `NAME[(...)]` is **not** an exception: the inner
+     text still needs quotes — `NAME[("text with /")]` not
+     `NAME[(text with /)]`. Same applies to `{(text)}`, `>(text)<`, etc.
+
      ```
      A["My Node (with parens)"]
      B["Process: do thing"]
      C{"Decision: any X?"}
+     D[("Database — primary store")]
      ```
 
   5. **Keep IDs identifier-safe** — letters, digits, underscores only.

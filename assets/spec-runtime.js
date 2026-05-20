@@ -1,6 +1,5 @@
 /*
  * spec-runtime.js — single shared runtime for every SPEC.html in this project.
- * TDD variant: adds RGR cycle counting and "Current TDD phase" derivation.
  *
  * Lives at .specs/assets/spec-runtime.js. Each SPEC.html loads it via:
  *   <script src="../assets/spec-runtime.js" defer></script>
@@ -10,18 +9,12 @@
  *                             completed vs total, writes derived strings into
  *                             every [data-progress-target] element. Re-runs
  *                             on any data-status mutation.
- *                             TDD additions:
- *                             - Counts .task--impl elements as RGR cycles
- *                               (writes tdd-cycles-done / tdd-cycles-total).
- *                             - Derives "Current TDD phase" (writes tdd-phase):
- *                                 in-progress IMPL task → its data-tdd-phase
- *                                 else first pending TEST task → "RED"
- *                                 else first pending IMPL task → "GREEN"
- *                                 else → "—"
  *   mountMermaid()          — Loads Mermaid v11 ESM from jsDelivr only when
  *                             at least one <pre class="mermaid"> exists.
- *   mountPrism()            — Loads PrismJS core + autoloader + diff-highlight
- *                             only when a <pre class="language-*"> exists.
+ *   mountDiffs()            — Parses every figure.code-diff into a row-based
+ *                             GitHub-style grid ([line# | sign | code]) and
+ *                             loads PrismJS core + autoloader (no diff-highlight
+ *                             plugin) to syntax-highlight the stripped code.
  *   mountAnnotationArrows() — For each .wf-annotation[data-points-to], draws
  *                             an SVG line from the annotation to the referenced
  *                             element. Redraws on resize (debounced 100ms).
@@ -52,7 +45,6 @@
     const tasks = document.querySelectorAll('[data-task][data-status]');
     const phases = document.querySelectorAll('[data-phase][data-status]');
     const ac = document.querySelectorAll('[data-ac][data-status]');
-    const implTasks = document.querySelectorAll('.task--impl[data-task]');
 
     const counts = {
       spec: { done: 0, total: 0 },
@@ -60,7 +52,6 @@
       ac: { done: 0, total: ac.length },
       blockers: 0,
       perPhase: {},
-      tddCycles: { done: 0, total: implTasks.length },
     };
 
     tasks.forEach((el) => {
@@ -77,10 +68,6 @@
       }
     });
 
-    implTasks.forEach((el) => {
-      if (el.getAttribute('data-status') === 'completed') counts.tddCycles.done++;
-    });
-
     phases.forEach((el) => {
       if (el.getAttribute('data-status') === 'completed') counts.phases.done++;
     });
@@ -88,22 +75,6 @@
     ac.forEach((el) => {
       if (el.getAttribute('data-status') === 'completed') counts.ac.done++;
     });
-
-    // Derive current TDD phase. If any task is in-progress with data-tdd-phase,
-    // use that. Else look at the first pending task:
-    //   .task--test → RED (about to write failing test)
-    //   .task--impl → GREEN (test exists, about to make it pass)
-    let tddPhase = '—';
-    const inProgress = document.querySelector('[data-task][data-status="in-progress"][data-tdd-phase]');
-    if (inProgress) {
-      tddPhase = inProgress.getAttribute('data-tdd-phase').toUpperCase();
-    } else {
-      const firstPending = Array.from(tasks).find((t) => t.getAttribute('data-status') === 'pending');
-      if (firstPending) {
-        if (firstPending.classList.contains('task--test')) tddPhase = 'RED';
-        else if (firstPending.classList.contains('task--impl')) tddPhase = 'GREEN';
-      }
-    }
 
     const pct = (d, t) => (t === 0 ? 0 : Math.round((d / t) * 100));
 
@@ -118,9 +89,6 @@
       'ac-total': counts.ac.total,
       'ac-pct': `${pct(counts.ac.done, counts.ac.total)}%`,
       blockers: counts.blockers,
-      'tdd-cycles-done': counts.tddCycles.done,
-      'tdd-cycles-total': counts.tddCycles.total,
-      'tdd-phase': tddPhase,
     };
 
     Object.entries(counts.perPhase).forEach(([id, { done, total }]) => {
@@ -146,33 +114,16 @@
     });
 
     // Auto-inject a progress bar into each .scorecard__cell based on the
-    // data-progress-target it contains. No SKILL.md change required.
+    // data-progress-target it contains. Detection is purely DOM-driven — no
+    // SKILL.md change required for existing specs to upgrade.
     const cellRules = [
       { needles: ['spec-done', 'spec-tasks-total', 'spec-total'], done: counts.spec.done, total: counts.spec.total },
       { needles: ['phases-done', 'phases-total'],                  done: counts.phases.done, total: counts.phases.total },
       { needles: ['ac-done', 'ac-total'],                          done: counts.ac.done, total: counts.ac.total },
-      { needles: ['tdd-cycles-done', 'tdd-cycles-total'],          done: counts.tddCycles.done, total: counts.tddCycles.total },
     ];
     document.querySelectorAll('.scorecard__cell').forEach((cell) => {
       const keys = Array.from(cell.querySelectorAll('[data-progress-target]'))
         .map((el) => el.getAttribute('data-progress-target'));
-      // TDD phase cell — colour the value, attach a full-width bar.
-      if (keys.includes('tdd-phase')) {
-        let bar = cell.querySelector(':scope > .scorecard__bar');
-        if (!bar) {
-          bar = document.createElement('div');
-          bar.className = 'scorecard__bar';
-          cell.appendChild(bar);
-        }
-        bar.style.setProperty('--progress', '100%');
-        const phaseLc = (tddPhase || '').toLowerCase();
-        if (['red', 'green', 'refactor'].includes(phaseLc)) {
-          cell.setAttribute('data-tdd-phase-value', phaseLc);
-        } else {
-          cell.removeAttribute('data-tdd-phase-value');
-        }
-        return;
-      }
       const rule = cellRules.find((r) => r.needles.some((n) => keys.includes(n)));
       if (!rule) return;
       let bar = cell.querySelector(':scope > .scorecard__bar');
@@ -188,7 +139,7 @@
       else cell.setAttribute('data-progress', 'partial');
     });
 
-    // Per-phase header progress strip.
+    // Per-phase header progress strip — set --progress on each <details class="phase" data-phase>.
     document.querySelectorAll('.phase[data-phase]').forEach((phase) => {
       const id = phase.getAttribute('data-phase');
       const { done = 0, total = 0 } = counts.perPhase[id] || {};
@@ -364,19 +315,51 @@
   }
 
   // ---------------------------------------------------------------------------
-  // mountPrism
+  // mountDiffs — GitHub-style code-diff renderer.
   // ---------------------------------------------------------------------------
+  // The AI emits `<figure class="code-diff"><pre class="language-diff-LANG
+  // diff-highlight"><code>+ line\n  context\n- line</code></pre></figure>`.
+  // Instead of letting PrismJS's diff-highlight plugin tokenize the prefix
+  // chars inline, we parse the raw text ourselves and rebuild the DOM as a
+  // table-like grid: each line becomes a row of [line# | sign | code], with
+  // the code column highlighted by Prism using only the base language grammar
+  // (no diff- prefix). Net result: a real left gutter, no phantom 2-space
+  // indent on context lines, and full row backgrounds for added/removed.
 
-  function mountPrism() {
-    // Normalize every <pre> inside a figure.code-diff so PrismJS will pick it
-    // up even if the AI forgot one of the required hooks:
-    //   1. <pre> must carry `language-diff-LANG` AND `diff-highlight`
-    //   2. Content must be wrapped in <code> (PrismJS does not highlight
-    //      bare <pre> children)
-    document.querySelectorAll('figure.code-diff').forEach((fig) => {
-      const lang = (fig.getAttribute('data-language') || 'plaintext')
-        .toLowerCase().replace(/[^a-z0-9+-]/g, '');
-      if (lang && lang !== 'plaintext') {
+  function mountDiffs() {
+    const figures = document.querySelectorAll('figure.code-diff');
+    if (figures.length === 0) return;
+
+    const blocks = [];
+    const langs = new Set();
+
+    figures.forEach((fig) => {
+      const pre = fig.querySelector('pre');
+      if (!pre) return;
+      const view = fig.getAttribute('data-view') || 'unified';
+
+      // Resolve language: data-language wins, otherwise pull out of
+      // `language-diff-LANG` class hook.
+      let lang = (fig.getAttribute('data-language') || '').toLowerCase();
+      if (!lang) {
+        const m = Array.from(pre.classList)
+          .map((c) => c.match(/^language-diff-(.+)$/))
+          .find(Boolean);
+        if (m) lang = m[1].toLowerCase();
+      }
+      lang = lang.replace(/[^a-z0-9+#-]/g, '') || 'plaintext';
+
+      // Snapshot the raw diff source from <code> (or bare <pre>) before
+      // we rewrite the DOM. Preserve it on data-diff-source for the
+      // validator + manual inspection.
+      const codeEl = pre.querySelector(':scope > code');
+      const raw = codeEl ? codeEl.textContent : pre.textContent;
+      pre.setAttribute('data-diff-source', raw);
+      pre.setAttribute('data-language', lang);
+      pre.setAttribute('data-view', view);
+
+      // Language chip in the figcaption / meta slot.
+      if (lang !== 'plaintext') {
         const meta = fig.querySelector('.code-diff__meta') || fig.querySelector('figcaption');
         if (meta && !meta.querySelector(':scope > .code-diff__lang')) {
           const chip = document.createElement('span');
@@ -385,51 +368,119 @@
           meta.prepend(chip);
         }
       }
-      fig.querySelectorAll('pre').forEach((pre) => {
-        if (!Array.from(pre.classList).some((c) => /^language-diff(-|$)/.test(c))) {
-          Array.from(pre.classList).filter((c) => c.startsWith('language-')).forEach((c) => pre.classList.remove(c));
-          pre.classList.add(`language-diff-${lang}`);
-        }
-        if (!pre.classList.contains('diff-highlight')) pre.classList.add('diff-highlight');
-        if (!pre.querySelector(':scope > code')) {
-          const code = document.createElement('code');
-          code.className = pre.className;
-          while (pre.firstChild) code.appendChild(pre.firstChild);
-          pre.appendChild(code);
-        }
-      });
+
+      langs.add(lang);
+      blocks.push({ fig, pre, raw, lang, view });
     });
 
-    if (!document.querySelector('pre[class*="language-"]')) return;
+    if (blocks.length === 0) return;
 
-    const cssHrefs = [
-      'https://cdn.jsdelivr.net/npm/prismjs@1/themes/prism.min.css',
-      'https://cdn.jsdelivr.net/npm/prismjs@1/plugins/diff-highlight/prism-diff-highlight.min.css',
-    ];
-    cssHrefs.forEach((href) => {
-      const link = document.createElement('link');
-      link.rel = 'stylesheet';
-      link.href = href;
-      document.head.appendChild(link);
-    });
+    const renderAll = () => blocks.forEach(renderDiffBlock);
+
+    const needsPrism = blocks.some((b) => b.lang !== 'plaintext');
+    if (!needsPrism) { renderAll(); return; }
+
+    // PrismJS core + autoloader only (no diff-highlight plugin — we tokenize
+    // diffs ourselves and only ask Prism to highlight the stripped code).
+    const themeLink = document.createElement('link');
+    themeLink.rel = 'stylesheet';
+    themeLink.href = 'https://cdn.jsdelivr.net/npm/prismjs@1/themes/prism.min.css';
+    document.head.appendChild(themeLink);
 
     const jsSrcs = [
       'https://cdn.jsdelivr.net/npm/prismjs@1/components/prism-core.min.js',
       'https://cdn.jsdelivr.net/npm/prismjs@1/plugins/autoloader/prism-autoloader.min.js',
-      'https://cdn.jsdelivr.net/npm/prismjs@1/plugins/diff-highlight/prism-diff-highlight.min.js',
     ];
-    const loadNext = (i) => {
+    let i = 0;
+    const loadNext = () => {
       if (i >= jsSrcs.length) {
-        if (window.Prism && window.Prism.highlightAll) window.Prism.highlightAll();
+        const al = window.Prism && window.Prism.plugins && window.Prism.plugins.autoloader;
+        if (al) {
+          al.languages_path = 'https://cdn.jsdelivr.net/npm/prismjs@1/components/';
+          al.loadLanguages(Array.from(langs), renderAll, () => renderAll());
+        } else {
+          renderAll();
+        }
         return;
       }
       const s = document.createElement('script');
-      s.src = jsSrcs[i];
-      s.onload = () => loadNext(i + 1);
-      s.onerror = () => console.warn('[specmint] PrismJS failed to load — code blocks render as plain text.');
+      s.src = jsSrcs[i++];
+      s.onload = loadNext;
+      s.onerror = () => {
+        console.warn('[specmint] PrismJS failed to load — diffs render as plain text.');
+        renderAll();
+      };
       document.head.appendChild(s);
     };
-    loadNext(0);
+    loadNext();
+  }
+
+  function renderDiffBlock(block) {
+    const { fig, pre, raw, lang, view } = block;
+    const lines = raw.replace(/\n$/, '').split('\n');
+
+    const container = document.createElement('div');
+    container.className = `diff-rows diff-rows--${view}`;
+
+    let lineNum = 1;
+    lines.forEach((line) => {
+      let type, content;
+      const head = line[0];
+      if (head === '+') {
+        type = 'added';
+        content = line.length > 1 && line[1] === ' ' ? line.slice(2) : line.slice(1);
+      } else if (head === '-') {
+        type = 'removed';
+        content = line.length > 1 && line[1] === ' ' ? line.slice(2) : line.slice(1);
+      } else if (head === ' ') {
+        // Two leading spaces = context; strip them so the code lines up.
+        content = line.length > 1 && line[1] === ' ' ? line.slice(2) : line.slice(1);
+        type = 'context';
+      } else if (line === '') {
+        type = 'context'; content = '';
+      } else {
+        // No prefix at all — treat as context, render verbatim.
+        type = 'context'; content = line;
+      }
+
+      const row = document.createElement('div');
+      row.className = `diff-row diff-row--${type}`;
+
+      const numEl = document.createElement('span');
+      numEl.className = 'diff-num';
+      numEl.textContent = String(lineNum++);
+      numEl.setAttribute('aria-hidden', 'true');
+
+      const signEl = document.createElement('span');
+      signEl.className = 'diff-sign';
+      signEl.textContent = type === 'added' ? '+' : type === 'removed' ? '-' : ' ';
+      signEl.setAttribute('aria-hidden', 'true');
+
+      const codeEl = document.createElement('span');
+      codeEl.className = 'diff-code';
+      const grammar = window.Prism && window.Prism.languages && window.Prism.languages[lang];
+      if (grammar) {
+        try {
+          codeEl.innerHTML = window.Prism.highlight(content, grammar, lang);
+        } catch (e) {
+          codeEl.textContent = content;
+        }
+      } else {
+        codeEl.textContent = content;
+      }
+
+      row.append(numEl, signEl, codeEl);
+      container.appendChild(row);
+    });
+
+    // Replace the pre's content with the row container. Strip language-diff-*
+    // and diff-highlight classes so any leftover Prism logic skips this <pre>.
+    pre.innerHTML = '';
+    Array.from(pre.classList)
+      .filter((c) => c.startsWith('language-') || c === 'diff-highlight')
+      .forEach((c) => pre.classList.remove(c));
+    pre.classList.add('diff-rendered');
+    pre.appendChild(container);
   }
 
   // ---------------------------------------------------------------------------
@@ -536,8 +587,6 @@
   //   - Manual invocation: call window.specmintValidate() — always logs.
   //   - Verbose dev mode: localStorage.specmintDebug = "1" forces a summary
   //     even when the spec is clean.
-  //   - TDD additions: requires "testing" and "tdd-log" regions, checks that
-  //     every IMPL task has a "satisfies [TEST-XX-NN]" reference.
   // ---------------------------------------------------------------------------
 
   async function validate({ alwaysLog = false } = {}) {
@@ -585,23 +634,12 @@
     }
 
     // 4. Required regions present (warn only — some are optional)
-    //    TDD specs additionally require "testing" and "tdd-log".
-    const required = ['meta', 'header', 'overview', 'acceptance', 'architecture', 'testing', 'libraries', 'phases', 'tdd-log', 'decisions'];
+    const required = ['meta', 'header', 'overview', 'acceptance', 'architecture', 'phases', 'decisions'];
     required.forEach((name) => {
       if (!opens.includes(name)) issues.push({ area: 'regions', level: 'warn', msg: `Recommended region "${name}" not found` });
     });
 
-    // 5. TDD-specific: every IMPL task should reference a TEST task
-    const implTasks = Array.from(document.querySelectorAll('.task--impl'));
-    implTasks.forEach((el) => {
-      const code = el.getAttribute('data-task') || '(unknown)';
-      const text = el.textContent || '';
-      if (!/\bsatisfies\s*\[?\s*TEST-/i.test(text) && !/→\s*\[?TEST-/.test(text)) {
-        issues.push({ area: 'tdd', level: 'warn', msg: `IMPL task [${code}] has no "satisfies [TEST-XX-NN]" reference` });
-      }
-    });
-
-    // 6. Mermaid block render status (rendered nodes are marked diagram--error
+    // 5. Mermaid block render status (rendered nodes are marked diagram--error
     //    by mountMermaid; if Mermaid is loaded we can also re-parse sources).
     const mermaidNodes = Array.from(document.querySelectorAll('pre.mermaid'));
     const errFigs = Array.from(document.querySelectorAll('figure.diagram--error'));
@@ -610,6 +648,7 @@
       const tag = label ? `"${label.textContent.trim()}"` : '(unlabeled)';
       issues.push({ area: 'mermaid', level: 'error', msg: `Render failed for diagram ${tag} — inspect data-mermaid-source on its <pre class="mermaid">` });
     });
+    // If Mermaid is available, try parse() for any node that wasn't already flagged.
     if (window.__specmintMermaid && typeof window.__specmintMermaid.parse === 'function') {
       for (const node of mermaidNodes) {
         const fig = node.closest('figure.diagram');
@@ -625,7 +664,7 @@
       }
     }
 
-    // 7. HTML-entity contamination inside Mermaid source (common AI authoring bug)
+    // 6. HTML-entity contamination inside Mermaid source (common AI authoring bug)
     mermaidNodes.forEach((node) => {
       const src = node.getAttribute('data-mermaid-source') || '';
       const hit = src.match(/&(amp|lt|gt|quot|#\d+);/);
@@ -637,7 +676,7 @@
       }
     });
 
-    // 8. ASCII art inside mockup figures (common AI authoring bug — mockups
+    // 7. ASCII art inside mockup figures (common AI authoring bug — mockups
     //    MUST compose from .wf-* / .ui-* primitives, never <pre> with boxes)
     document.querySelectorAll('figure.mockup').forEach((fig) => {
       const pres = fig.querySelectorAll('pre');
@@ -654,7 +693,7 @@
       });
     });
 
-    // 9. Unescaped HTML special chars inside <pre><code> code blocks.
+    // 8. Unescaped HTML special chars inside <pre><code> code blocks.
     //    <pre><code> is NOT a raw-text element in HTML5; unescaped "<", ">",
     //    "&" in the source are parsed as markup. Common AI authoring bug:
     //    pasting Java/TS generics (List<Object>), JSX (<Foo />), shell
@@ -687,7 +726,7 @@
     const errors = issues.filter((i) => i.level === 'error').length;
     const warnings = issues.filter((i) => i.level === 'warn').length;
     if (issues.length === 0) {
-      if (alwaysLog || debug) console.info(`[specmint] validate OK — ${mermaidNodes.length} diagram(s), ${taskCodes.length} task(s), ${implTasks.length} IMPL task(s)`);
+      if (alwaysLog || debug) console.info(`[specmint] validate OK — ${mermaidNodes.length} diagram(s), ${taskCodes.length} task(s)`);
     } else {
       const label = `[specmint] validate — ${errors} error(s), ${warnings} warning(s)`;
       console.groupCollapsed(label);
@@ -706,7 +745,7 @@
 
   async function init() {
     deriveProgress();
-    mountPrism();
+    mountDiffs();
     mountAnnotationArrows();
     mountCopyButtons();
     mountTocActiveSection();
