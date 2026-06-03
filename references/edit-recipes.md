@@ -397,7 +397,7 @@ Two places — JSON and visible chips.
 
 ## Update the registry
 
-`.specs/registry.md` is still markdown. After updating progress in `SPEC.html` (which just means a `data-status` swap), update the registry table row. The runtime derives progress in the HTML, but the registry is parsed by other plugins so it needs its `X/Y` and `Updated` columns kept in sync.
+`.specs/registry.md` is still markdown. After updating progress in `SPEC.html` (which just means a `data-status` swap), update the registry table row. The runtime derives progress in the HTML, but the registry is parsed by other tools so it needs its `X/Y` and `Updated` columns kept in sync.
 
 ```markdown
 <!-- Before -->

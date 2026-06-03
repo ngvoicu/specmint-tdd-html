@@ -1,7 +1,7 @@
 # Command Contracts
 
-This file defines functional contracts for `commands/*.md` and the universal
-`SKILL.md` behavior. Use it as a review checklist before releases.
+This file defines functional contracts for the `SKILL.md` skill behavior. Use
+it as a review checklist before releases.
 
 ## Global Contracts
 
@@ -37,7 +37,7 @@ This file defines functional contracts for `commands/*.md` and the universal
 
 ## Command Contracts
 
-### `/specmint-tdd-html:forge`
+### Forge
 
 1. Resolve `<spec-id>` before research output paths are referenced.
 2. Collision-check existing spec IDs before creating new files (check
@@ -45,14 +45,14 @@ This file defines functional contracts for `commands/*.md` and the universal
 3. Forge must not run in plan mode; if plan mode is active, require exit
    before continuing (Claude Code only — other tools proceed normally).
 4. Refresh `.specs/assets/` on every forge: copy `spec-styles.css` and
-   `spec-runtime.js` from the plugin's `assets/`, **overwriting any
-   existing files**. The runtime is plugin-managed; overwrite-on-forge
+   `spec-runtime.js` from the skill's `assets/`, **overwriting any
+   existing files**. The runtime is skill-managed; overwrite-on-forge
    ensures existing projects pick up rendering fixes.
-5. Create `.specs/<spec-id>/` directory before spawning the researcher or
-   writing any research output.
+5. Create `.specs/<spec-id>/` directory before spawning the research
+   subagent or writing any research output.
 6. Output scope is `.specs/` artifacts only (`research-*.md`,
    `interview-*.md`, `SPEC.html`, `registry.md` updates, assets on first run).
-7. After approval, handoff to `/specmint-tdd-html:implement` instead of
+7. After approval, handoff to the implement workflow instead of
    implementing inside forge.
 8. Interview must ask about acceptance criteria ("What does 'done' look like?").
 9. **If UI work is in scope, interview must ask about mockup fidelity**
@@ -65,7 +65,7 @@ This file defines functional contracts for `commands/*.md` and the universal
     `decisions`, `tdd-log`, `deviations`.
 11. Forge must run `references/validate.md` before presenting the spec.
 
-### `/specmint-tdd-html:implement`
+### Implement
 
 1. Supports scope parsing: current flow, phase-specific, all phases, task code.
 2. For each completed task: swap `data-status="pending"` →
@@ -83,7 +83,7 @@ This file defines functional contracts for `commands/*.md` and the universal
    - Set phase `data-status="blocked"` only when the whole phase is blocked.
    - Record blocker context in the Decision Log or Deviations.
 
-### `/specmint-tdd-html:resume`
+### Resume
 
 1. If no active spec exists, list specs and request target.
 2. Parse progress from `SPEC.html` `data-status` counts.
@@ -95,7 +95,7 @@ This file defines functional contracts for `commands/*.md` and the universal
    for last-cycle context.
 6. Present a compact summary. No separate Resume Context section to read.
 
-### `/specmint-tdd-html:pause`
+### Pause
 
 1. If no active spec exists, report no-op and stop.
 2. Finalize state at a clean task / RGR-cycle boundary — every completed
@@ -106,14 +106,14 @@ This file defines functional contracts for `commands/*.md` and the universal
 5. Set status `paused` (JSON + visible pill) and sync registry.
 6. Run `references/validate.md`.
 
-### `/specmint-tdd-html:switch`
+### Switch
 
 1. Validate target ID and target `SPEC.html` existence before pausing
    current spec.
 2. If target already active, report and stop.
 3. Pause current (if any), activate target, resume target, sync registry.
 
-### `/specmint-tdd-html:list`
+### List
 
 1. Handle missing registry gracefully.
 2. Group by status in order: active, paused, completed, archived.
@@ -121,13 +121,13 @@ This file defines functional contracts for `commands/*.md` and the universal
 4. Compute task counts by reading each `SPEC.html` and counting
    `<li class="task">` elements by `data-status`.
 
-### `/specmint-tdd-html:status`
+### Status
 
 1. Show detailed phase/task breakdown for active spec.
 2. Surface current TDD phase, RGR cycles done/total, last TDD Log entry.
 3. If no active spec, guide to activate one.
 
-### `/specmint-tdd-html:openapi`
+### OpenAPI
 
 1. Generate/update `.openapi/openapi.yaml` and `.openapi/endpoints/*.md`.
 2. Preserve manual additions when updating existing files.
@@ -138,15 +138,15 @@ This file defines functional contracts for `commands/*.md` and the universal
 
 1. `SKILL.md` must include cross-tool behavior for all declared triggers.
 2. If `generate openapi` is listed as a trigger, OpenAPI workflow behavior must
-   be defined in `SKILL.md` (not only plugin command files).
-3. Command-specific docs can specialize behavior but cannot violate critical
+   be defined in `SKILL.md`.
+3. Reference docs can specialize behavior but cannot violate critical
    invariants from `SKILL.md`.
 4. `SKILL.md` must be self-contained for standalone users (`npx skills add`).
    Any content essential for spec creation must be inlined (e.g., the SPEC.html
-   template skeleton). References to `references/*.md` and `commands/*.md`
-   should be conditional ("Plugin users: see...").
-5. Agent spawning (researcher) must have a graceful fallback for tools that
-   don't support agents.
+   template skeleton). References to `references/*.md` are plain pointers.
+5. The research subagent (references/researcher.md) is spawned via the Task
+   tool as described in SKILL.md, with a graceful inline fallback for tools
+   that don't support subagents.
 
 ## TDD Contracts
 
@@ -217,7 +217,7 @@ TDD guarantee.
     review MUST verify this before presenting the spec. If any phase fails
     this check, restructure it before presenting to the user.
 
-12. **Research includes test infrastructure.** The researcher agent MUST
+12. **Research includes test infrastructure.** The research subagent MUST
     analyze the project's existing test infrastructure (framework, patterns,
     coverage tools, anti-patterns) as part of the research phase.
 
@@ -295,17 +295,14 @@ All commands and SKILL.md must use these standardized icons:
 
 ## Release Checklist
 
-1. `claude plugin validate .claude-plugin/plugin.json` passes.
-2. `claude plugin validate .claude-plugin/marketplace.json` passes without
-   warnings.
-3. Paths referenced in docs and templates exist (excluding placeholder paths).
-4. Command contracts in this file still match `commands/*.md` and `SKILL.md`.
-5. TDD contracts are enforced by all commands and the universal skill.
-6. `SKILL.md` is self-contained for standalone use (template references and
-   researcher fallback documented).
-7. Status icons are consistent across all files (see Icon Standards above).
-8. `assets/spec-styles.css` and `assets/spec-runtime.js` exist and are
+1. Paths referenced in docs and templates exist (excluding placeholder paths).
+2. Command contracts in this file still match `SKILL.md`.
+3. TDD contracts are enforced by the universal skill.
+4. `SKILL.md` is self-contained for standalone use (template references and
+   research subagent fallback documented).
+5. Status icons are consistent across all files (see Icon Standards above).
+6. `assets/spec-styles.css` and `assets/spec-runtime.js` exist and are
    distributed to consumer projects' `.specs/assets/` on first forge.
-9. `references/html-template.html` validates with `references/validate.md`.
-10. `references/html-template.html` uses canonical JSON key order in
-    `<script id="spec-meta">`.
+7. `references/html-template.html` validates with `references/validate.md`.
+8. `references/html-template.html` uses canonical JSON key order in
+   `<script id="spec-meta">`.

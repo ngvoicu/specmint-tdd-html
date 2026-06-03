@@ -1,10 +1,10 @@
 # CLAUDE.md — Spec Mint TDD HTML
 
-Guidance for Claude Code (and other AI coding agents) when working on this plugin's source.
+Guidance for Claude Code (and other AI coding agents) when working on this skill's source.
 
 ## Project Overview
 
-Spec Mint TDD HTML is a Claude Code plugin (no build step, no dependencies) that enforces strict test-driven development in AI coding workflows. Every task starts with a failing test; production code exists only to make tests pass; refactoring happens under green. Specs render as professional HTML documents:
+Spec Mint TDD HTML is a universal skill (no build step, no dependencies) that enforces strict test-driven development in AI coding workflows. Every task starts with a failing test; production code exists only to make tests pass; refactoring happens under green. Specs render as professional HTML documents:
 
 - **Mermaid diagrams** — flowchart, sequenceDiagram, erDiagram, stateDiagram-v2, etc.
 - **Testing Architecture section** — framework & tools, isolation strategy, coverage targets, test commands, anti-patterns
@@ -13,9 +13,9 @@ Spec Mint TDD HTML is a Claude Code plugin (no build step, no dependencies) that
 - **Derived "Current TDD phase" scorecard** — `spec-runtime.js` derives RED / GREEN / REFACTOR from `data-tdd-phase` on the in-progress IMPL task, or from the type of the next pending task
 - **Syntax-highlighted code diffs**, **wireframe / hi-fi UI mockups** (bespoke `.wf-*` / `.ui-*` libraries, zero CDN, constrained palette)
 
-Plugin source is markdown + JSON. Only the user-facing spec output (`SPEC.html`) is HTML.
+Skill source is markdown. Only the user-facing spec output (`SPEC.html`) is HTML.
 
-Also ships as a universal skill (`SKILL.md`) for Codex, Cursor, Windsurf, Cline, and Gemini CLI via `npx skills add ngvoicu/specmint-tdd-html -a <tool>`.
+Ships as a universal skill (`SKILL.md`) for Claude Code, Codex, Cursor, Windsurf, Cline, and Gemini CLI via `npx skills add ngvoicu/specmint-tdd-html -a <tool>`.
 
 ## Knowledge base
 
@@ -28,16 +28,16 @@ Topics relevant to this repo: specmint-tdd-html overview, TDD invariants, distri
 
 ## Architecture
 
-The plugin has two conceptual layers:
+The skill has two conceptual layers:
 
-**Plugin layer** (this repo) — `commands/*.md` (one file per slash command), `agents/researcher.md` (Opus-model deep research subagent including test infrastructure analysis), `.claude-plugin/` and `.cursor-plugin/` (metadata), `references/*` (format reference + edit recipes + validator + testing-knowledge + mockup libraries), `assets/*` (shared `spec-styles.css` + `spec-runtime.js` copied into consuming projects). The rendered preview lives at <https://specmint.io/#gallery>.
+**Skill layer** (this repo) — `SKILL.md` (the universal skill, including the full forge/implement/resume workflow), `references/*` (format reference + edit recipes + validator + testing-knowledge + mockup libraries + `researcher.md` deep-research subagent brief), `assets/*` (shared `spec-styles.css` + `spec-runtime.js` copied into consuming projects). The rendered preview lives at <https://specmint.io/#gallery>.
 
 **Data layer** (consuming project) — `.specs/` directory created in the consuming project root (not here). Layout:
 
 ```
 .specs/
 ├── assets/
-│   ├── spec-styles.css    # Shared design system — copied once from plugin's assets/
+│   ├── spec-styles.css    # Shared design system — copied once from skill's assets/
 │   └── spec-runtime.js    # Progress deriver + Mermaid/Prism init + SVG annotation arrows
 │                          # + RGR-phase derivation (TDD-specific)
 ├── registry.md            # Markdown table — denormalized index across specs
@@ -69,9 +69,9 @@ The plugin has two conceptual layers:
 | Source of truth | Must match |
 |----------------|------------|
 | `references/spec-format.md` | Spec format rules in `SKILL.md` |
-| `references/testing-knowledge.md` | Testing guidance in `SKILL.md` and `agents/researcher.md` |
+| `references/testing-knowledge.md` | Testing guidance in `SKILL.md` and `references/researcher.md` |
 | `assets/spec-styles.css` + `assets/spec-runtime.js` | `references/html-template.html` and `references/edit-recipes.md` |
-| `commands/*.md` | Behavioral contracts in `references/command-contracts.md` |
+| `SKILL.md` | Behavioral contracts in `references/command-contracts.md` |
 
 `skills/specmint-tdd-html/SKILL.md` is a symlink to `../../SKILL.md` — never replace it with a real file.
 
@@ -79,26 +79,25 @@ The plugin has two conceptual layers:
 
 - `CLAUDE.md`, `AGENTS.md`, `.specs/`, and `specmint-tdd-html-workspace/` are intentionally untracked in this repo (see `.gitignore`).
 - `AGENTS.md` provides Codex-style contributor guidelines; `CLAUDE.md` (this file) provides Claude-Code-flavored project context. They share content; format differs.
-- `SKILL.md` must work for all AI tools — the Claude Code Plugin section at the top is tool-specific and kept to ~20 lines.
+- `SKILL.md` must work for all AI tools — it is the single self-contained entrypoint for the whole workflow.
 - Phases group by feature (no `(TEST)` or `(IMPL)` suffixes) — tasks alternate TEST-IMPL within each phase.
 - Spec format details are in `references/spec-format.md` — single source of truth.
-- Workflow details (forge phases, implement RGR lifecycle, pause/resume) are in the respective `commands/*.md` files.
+- Workflow details (forge phases, implement RGR lifecycle, pause/resume) live in `SKILL.md`.
 - Pause/resume checkpoints at task / RGR-cycle boundaries only — there is no Resume Context section. Documented in SKILL.md.
 
 ## Working on This Codebase
 
 ### Behavioral changes
-- Edit `commands/*.md` to change slash command behavior. The TDD-specific invariants (Blocking Rule, Tests Are Sacred, Test Execution Rule, Violation Examples) live in `SKILL.md` and `commands/implement.md` — keep them in sync.
-- Edit `references/command-contracts.md` when you change command contracts; this is the review checklist (includes 20 TDD-specific contracts).
+- Edit `SKILL.md` to change workflow behavior. The TDD-specific invariants (Blocking Rule, Tests Are Sacred, Test Execution Rule, Violation Examples) live in `SKILL.md` — keep them internally consistent.
+- Edit `references/command-contracts.md` when you change workflow contracts; this is the review checklist (includes 20 TDD-specific contracts).
 - Edit `references/testing-knowledge.md` to update testing framework / tooling guidance.
 
 ### Format changes
-- Edit `assets/spec-styles.css` / `assets/spec-runtime.js` to change rendered visual / runtime behavior for every generated `SPEC.html`. To eyeball changes, dogfood the plugin in a disposable consumer project — `claude plugin add /path/to/specmint-tdd-html`, run `/forge`, then open the generated `.specs/<id>/SPEC.html`. The reference render lives at <https://specmint.io/#gallery>.
+- Edit `assets/spec-styles.css` / `assets/spec-runtime.js` to change rendered visual / runtime behavior for every generated `SPEC.html`. To eyeball changes, install the skill into a disposable consumer project (e.g. `npx skills add ./. -g -a claude-code`, or copy `SKILL.md` into its skills dir), exercise the forge trigger in natural language, then open the generated `.specs/<id>/SPEC.html`. The reference render lives at <https://specmint.io/#gallery>.
 - After any spec-format change, run the validate recipe on a generated `SPEC.html` (see `references/validate.md`).
 
 ### Plumbing
-- Validate `.claude-plugin/*.json` and `.cursor-plugin/*.json` stay valid JSON after edits.
-- Smoke-test changes: `claude plugin add /path/to/specmint-tdd-html` in a disposable project, then run `/forge`, `/resume`, `/implement` (with a real test runner available so `Bash` test execution gates can fire).
+- Smoke-test changes: install the skill into a disposable project (e.g. `npx skills add ./. -g -a claude-code`, or copy `SKILL.md` into its skills dir), then exercise the natural-language triggers (forge / resume / implement) with a real test runner available so `Bash` test execution gates can fire.
 - Windsurf users must replace the symlink at `.windsurf/skills/specmint-tdd-html/SKILL.md` with a real file copy (Cascade doesn't follow symlinks).
 
 ## Eval Infrastructure
@@ -108,14 +107,12 @@ Real evals live at `evals/evals.json` — 6 scenarios with 33 verifiable expecta
 To run the full benchmark pipeline:
 
 ```
-/plugin install skill-creator                    # one-time
-/skill-creator improve                            # in a fresh session, point at this plugin
+/skill-creator improve                            # in a fresh session, point at this skill
 ```
 
 skill-creator spawns parallel test runs (with-skill + baseline), scores each expectation, and produces a benchmark + diff against any previous iteration. Run results land in a sibling `specmint-tdd-html-workspace/` directory (gitignored).
 
 ## Distribution
 
-- **Claude Code plugin**: `claude plugin add ngvoicu/specmint-tdd-html` (full feature set — all slash commands, researcher agent with test-infrastructure analysis, auto-triggers, RGR enforcement).
-- **Universal skill**: `npx skills add ngvoicu/specmint-tdd-html -a <codex|cursor|windsurf|cline|gemini>` (SKILL.md installs; no slash commands or researcher agent, but TDD workflow rules carry over).
+- **Universal skill**: `npx skills add ngvoicu/specmint-tdd-html -g -a <claude-code|codex|cursor|windsurf|cline|gemini>` (SKILL.md installs; auto-triggers on natural language, full TDD workflow including the deep-research subagent brief in `references/researcher.md`).
 - **GitHub**: <https://github.com/ngvoicu/specmint-tdd-html>

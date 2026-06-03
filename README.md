@@ -4,7 +4,7 @@
 
 Spec Mint TDD HTML enforces strict TDD in AI coding workflows. Every task starts with a failing test, no production code ships without red tests, and all tests are isolated. Specs have feature phases with alternating TEST-IMPL task pairs (true red-green-refactor per pair), a Testing Architecture section, and a TDD Log audit trail proving discipline was followed.
 
-Works with Claude Code (as a plugin), Codex, Cursor, Windsurf, Cline, Gemini CLI, and any AI coding tool that can read files.
+Works with Claude Code, Codex, Cursor, Windsurf, Cline, Gemini CLI, and any AI coding tool that can read files — installed as a universal skill.
 
 **[→ See a rendered SPEC.html](https://specmint.io/#gallery)** on specmint.io — Rate Limit Middleware exemplar with paired TEST-IMPL task cards, RGR swimlane TDD Log, and the full Testing Architecture section.
 
@@ -25,7 +25,7 @@ Spec Mint TDD HTML fixes all of this.
 
 ### The Forge Workflow
 
-Run `/specmint-tdd-html:forge "add user authentication with OAuth"` and Spec Mint TDD HTML takes over:
+Say "forge a spec for adding user authentication with OAuth" and Spec Mint TDD HTML takes over:
 
 **1. Deep Research** — Exhaustive codebase scan (reads 10-20+ actual files, not just file names), web search for best practices, Context7 library docs, library comparisons, cross-skill research (frontend-design, datasmith-pg, etc.), **test infrastructure analysis** (existing frameworks, runners, mocking patterns, testcontainers, coverage tools). Everything saved to `.specs/<id>/research-01.md`.
 
@@ -37,7 +37,7 @@ Run `/specmint-tdd-html:forge "add user authentication with OAuth"` and Spec Min
 
 **5. Write Spec** — Synthesizes all research and interviews into a comprehensive `SPEC.html` with Mermaid architecture diagrams, **Testing Architecture** (framework, isolation strategy, coverage targets, test commands, anti-patterns), library comparison tables, **feature phases with paired TEST-IMPL tasks** (true red-green-refactor), `[TEST-XX-NN]` / `[IMPL-XX-NN]` codes, optional wireframe/hi-fi UI mockups, an empty **TDD Log** rendered as RGR swimlanes, a decision log, and a deviations table. Runs a coherence review — including verifying every IMPL task immediately follows its TEST task — and the post-edit validator before presenting.
 
-**6. Implement** — Works through the spec task by task (via `/implement`), enforcing strict red-green-refactor: write test, run it (must fail), write minimum code, run test (must pass), refactor, run test (must still pass). Every transition is logged in the TDD Log.
+**6. Implement** — Works through the spec task by task during implementation, enforcing strict red-green-refactor: write test, run it (must fail), write minimum code, run test (must pass), refactor, run test (must still pass). Every transition is logged in the TDD Log.
 
 ### Specs Are Files
 
@@ -74,7 +74,7 @@ The screenshot above is a real `SPEC.html` rendered in a browser. The structure 
 - **TDD Log**: one `<article class="tdd-cycle">` per completed cycle, 3 lanes (RED / GREEN / REFACTOR) with monospace test output
 - **Deviations**: styled table
 
-The plugin ships a canonical empty template at `references/html-template.html`, edit recipes for every common operation (including `data-tdd-phase` swaps and appending TDD Log entries) at `references/edit-recipes.md`, plus mockup pattern libraries (`wireframe-library.md` + `mockup-library.md`).
+The skill ships a canonical empty template at `references/html-template.html`, edit recipes for every common operation (including `data-tdd-phase` swaps and appending TDD Log entries) at `references/edit-recipes.md`, plus mockup pattern libraries (`wireframe-library.md` + `mockup-library.md`).
 
 ### The TDD Structure
 
@@ -98,139 +98,41 @@ Spec Mint TDD HTML enforces test-first discipline at every level of the spec:
 
 ## Installation
 
-Two ways to use Spec Mint TDD HTML, depending on your setup.
-
-### Path 1: Claude Code Plugin (Full — Recommended)
-
-Everything: all 8 slash commands (`/forge`, `/implement`, `/resume`, `/pause`, `/switch`, `/list`, `/status`, `/openapi`), researcher agent (Opus-powered deep codebase + test infrastructure analysis), and SKILL.md auto-triggers.
+Spec Mint TDD HTML installs as a **universal skill** — one command, and it works in Claude Code, Codex, Cursor, Windsurf, Cline, Gemini CLI, and any AI coding tool that reads files.
 
 ```bash
-# In Claude Code, run:
-/plugin marketplace add ngvoicu/specmint-tdd-html
-/plugin install specmint-tdd-html
-```
+# Install globally (recommended)
+npx skills add ngvoicu/specmint-tdd-html -g
 
-### Path 2: Quick Setup via npx (Any Tool)
-
-Installs the SKILL.md into your tool's skill/instruction directory so it knows how to read, update, and resume specs from `.specs/` with full TDD enforcement.
-
-```bash
-# Claude Code (skill only — auto-triggers, no slash commands)
+# Or target a specific tool with -a
 npx skills add ngvoicu/specmint-tdd-html -g -a claude-code
-
-# OpenAI Codex
 npx skills add ngvoicu/specmint-tdd-html -g -a codex
-
-# Cursor
 npx skills add ngvoicu/specmint-tdd-html -g -a cursor
-
-# Windsurf
 npx skills add ngvoicu/specmint-tdd-html -g -a windsurf
-
-# Cline
 npx skills add ngvoicu/specmint-tdd-html -g -a cline
-
-# Gemini CLI
 npx skills add ngvoicu/specmint-tdd-html -g -a gemini
 ```
 
-For Claude Code, this installs SKILL.md with auto-triggers ("resume", "what was I working on", "create a spec for X", "red green refactor"). You **don't** get slash commands or the researcher agent — use Path 1 for the full plugin.
+Once installed, the skill auto-triggers on natural language — "forge a spec for X", "what was I working on?", "implement the spec". No slash commands and no marketplace: the skill bundles the full spec workflow, the deep-research subagent brief (`references/researcher.md`), and the spec format reference.
 
-For other tools, this installs the SKILL.md which teaches the tool the full TDD spec workflow — forging with test infrastructure analysis, red-green-refactor implementation, resuming with TDD context, and cross-session continuity.
-
-### Comparison: Plugin vs npx
-
-| Feature | Plugin (full) | npx (any tool) |
-|---------|:---:|:---:|
-| `/forge` research-interview workflow | Yes | No |
-| `/implement` with red-green-refactor | Yes | No |
-| `/resume`, `/pause`, `/switch` commands | Yes | No |
-| Researcher subagent (Opus, deep analysis + test infra) | Yes | No |
-| Auto-triggers (Claude Code only) | Yes | Yes |
-| Works with Codex, Cursor, Windsurf, etc. | No | Yes |
-| Multi-tool `.specs/` compatibility | Yes | Yes |
+> **Windsurf**: replace the symlink at `.windsurf/skills/specmint-tdd-html/SKILL.md` with a real file copy — Cascade doesn't follow symlinks.
 
 ## Usage
 
-### Claude Code Plugin Flow
+Talk to your AI tool in plain language — the skill recognizes the spec lifecycle and runs the right workflow:
 
-```
-# Start a new spec with deep research + test infrastructure analysis
-/specmint-tdd-html:forge "add OAuth authentication"
-→ Deep research (codebase + internet + Context7 + library comparison + test infra)
-→ Interview rounds (targeted questions + testing preferences)
-→ Writes SPEC.html with Testing Architecture, alternating TEST-IMPL tasks, TDD Log
-→ Coherence review (incl. TEST↔IMPL cross-references) before presenting
+| Goal | Say something like |
+|------|--------------------|
+| Start a new spec | "forge a spec for user authentication" |
+| Implement it (red-green-refactor) | "implement the spec" · "implement phase 2" · "red green refactor" · "run the tests" |
+| Resume where you left off | "what was I working on?" · "resume" |
+| Pause and save context | "pause the spec" |
+| Switch active spec | "switch to the api-refactor spec" |
+| List all specs | "list my specs" |
+| Show progress | "spec status" |
+| Generate API docs | "generate openapi" |
 
-# Implement with strict red-green-refactor
-/specmint-tdd-html:implement                    # Continue from current task
-/specmint-tdd-html:implement phase 3            # Implement all tasks in Phase 3
-/specmint-tdd-html:implement all phases         # Implement everything remaining
-
-# Generate OpenAPI spec from your codebase
-/specmint-tdd-html:openapi
-→ Scans routes, schemas, security config
-→ Writes .openapi/openapi.yaml + per-endpoint docs
-
-# Session ends — finalize at a clean RGR boundary
-/specmint-tdd-html:pause
-→ Appends any pending TDD Log entries, sets status to paused, runs validate
-
-# New session — pick up where you left off
-/specmint-tdd-html:resume
-→ Derives TDD phase from data-tdd-phase or next task type, shows last cycle
-
-# Juggling features
-/specmint-tdd-html:list                    # See all specs
-/specmint-tdd-html:switch auth-system      # Pauses current, activates auth-system
-/specmint-tdd-html:status                  # Detailed progress with TDD indicators
-```
-
-### Any Tool Flow (Codex, Cursor, Windsurf, Cline, Gemini CLI)
-
-Once configured via `npx skills add`, every tool understands the same TDD spec lifecycle. Here's the complete workflow:
-
-**Create a spec** — Ask the tool to plan or spec out work. It creates `.specs/<id>/SPEC.html` with Testing Architecture, feature phases of paired TEST-IMPL tasks, an empty TDD Log (filled during implementation), a decision log, and a deviations table.
-
-**Resume** — The tool reads `.specs/registry.md` to find the active spec, loads the SPEC.html, identifies the first task with `data-status="pending"` in the in-progress phase, and derives the current TDD phase (RED for a pending TEST task, GREEN for a pending IMPL task, or whatever `data-tdd-phase` says on an in-progress IMPL task).
-
-**Pause** — The tool finalizes state at a clean RGR-cycle boundary: every completed task has `data-status="completed"`, every closed cycle has a `<article class="tdd-cycle">` entry appended to the TDD Log, the status pill flips to `Paused`, and the validate recipe runs.
-
-**Switch** — The tool pauses the current spec (full pause), loads the target spec, sets it to `active` in the registry, and resumes it.
-
-**List** — The tool reads `.specs/registry.md` and shows specs grouped by status (active, paused, completed).
-
-**Complete** — The tool verifies every task has `data-status="completed"`, runs the full test suite one final time, and sets status to `completed` in both the SPEC.html `<script id="spec-meta">` JSON and the registry.
-
-#### Tool-specific invocation examples
-
-**Codex** (task-based prompts):
-```
-"create a spec for user authentication"
-"resume the auth spec"
-"pause and save context"
-"switch to the api-refactor spec"
-"show my specs"
-"mark the spec as done"
-```
-
-**Cursor / Windsurf / Cline** (chat-based):
-```
-"plan out a caching layer"
-"what was I working on?"
-"save my progress and pause"
-"switch to the auth spec"
-"list all specs"
-"complete the current spec"
-```
-
-**Gemini CLI**:
-```bash
-gemini "create a spec for rate limiting"
-gemini "resume"
-gemini "pause and save context"
-gemini "switch to auth-system"
-```
+Every action reads and writes plain files under `.specs/` — research notes, interviews, `SPEC.html`, and a `registry.md` index. Any tool that can read files shares the same `.specs/` directory, so you can forge in one tool and implement in another.
 
 ## The TDD Cycle
 
@@ -329,7 +231,7 @@ Synthesizes everything into a comprehensive `SPEC.html`:
 
 ### Phase 6: Implement
 
-Works through the spec task by task (via `/implement`), enforcing strict TDD:
+Works through the spec task by task during implementation, enforcing strict TDD:
 - **TEST tasks**: write tests, run them via Bash, confirm they FAIL, stash red output
 - **IMPL tasks**: set `data-tdd-phase="green"`, write minimum code, run tests, confirm they PASS, refactor under `data-tdd-phase="refactor"`, run tests again
 - Swaps `data-status="pending"` → `data-status="completed"` on each task as it finishes
@@ -357,31 +259,20 @@ Also covers: coverage tools (v8, JaCoCo, coverage.py, cargo-tarpaulin, coverlet)
 
 ## Plan Mode
 
-Spec Mint TDD HTML **bypasses** Claude Code's built-in plan mode. The `/forge` command IS your planning phase — deep research, interviews, spec writing with Testing Architecture and alternating TEST-IMPL task pairs. You don't need plan mode at all.
+Spec Mint TDD HTML **replaces** Claude Code's built-in plan mode. The forge workflow IS your planning phase — deep research, interviews, spec writing with Testing Architecture and alternating TEST-IMPL task pairs. You don't need plan mode at all.
 
-If you happen to be in plan mode when you run `/specmint-tdd-html:forge`, Spec Mint TDD HTML asks you to exit plan mode first (Shift+Tab), then rerun `/specmint-tdd-html:forge`.
+If you happen to be in plan mode when you start a forge, Spec Mint TDD HTML asks you to exit plan mode first (Shift+Tab), then start the forge workflow again.
 
 ## Project Structure
 
 ```
 specmint-tdd-html/
-├── .claude-plugin/
-│   ├── plugin.json                 # Plugin metadata (v2.0.0)
-│   └── marketplace.json            # Marketplace registration
-├── .cursor-plugin/
-│   └── plugin.json                 # Cursor distribution metadata
-├── commands/
-│   ├── forge.md                    # Research + test infra analysis → interview → TDD spec
-│   ├── implement.md                # Strict red-green-refactor cycle (RUN tests via Bash at every transition)
-│   ├── resume.md                   # Resume; derives current TDD phase
-│   ├── pause.md                    # Pause at a clean RGR boundary
-│   ├── switch.md                   # Switch between specs
-│   ├── list.md                     # List all specs
-│   ├── status.md                   # Detailed progress with TDD indicators
-│   └── openapi.md                  # Generate OpenAPI spec from codebase
-├── agents/
-│   └── researcher.md               # Deep research subagent (Opus) + test infra analysis
+├── SKILL.md                        # Universal skill (works with all tools)
+├── skills/
+│   └── specmint-tdd-html/
+│       └── SKILL.md                # → ../../SKILL.md (symlink for skills-CLI discovery)
 ├── references/
+│   ├── researcher.md               # Deep-research subagent brief (test infra analysis)
 │   ├── spec-format.md              # SPEC.html format reference (TDD-aware)
 │   ├── html-template.html          # Canonical empty SPEC.html template
 │   ├── edit-recipes.md             # Before/after snippets for every surgical edit (incl. data-tdd-phase, TDD Log append)
@@ -393,13 +284,8 @@ specmint-tdd-html/
 ├── assets/
 │   ├── spec-styles.css             # Shared design system — copied to .specs/assets/ on every forge
 │   └── spec-runtime.js             # Progress deriver + Mermaid/Prism init + RGR-phase derivation + diagram modal + validator
-├── specmint-tdd-html-workspace/    # Eval scaffold (gitignored)
-│   └── evals/evals.json            # Placeholder TODO assertions — not yet runnable
-├── skills/
-│   └── specmint-tdd-html/
-│       └── SKILL.md                # → ../../SKILL.md (symlink for plugin discovery)
-├── SKILL.md                        # Universal skill (works with all tools)
-└── README.md
+├── README.md
+└── LICENSE
 ```
 
 ## Spec Format
@@ -445,7 +331,7 @@ Canonical key order: `id`, `title`, `status`, `created`, `updated`, `priority`, 
 
 Plan mode is a good idea with a bad implementation. It restricts Claude to read-only tools and asks for a plan. That's it. No persistence, no research depth, no interviews, no progress tracking, and certainly no TDD enforcement.
 
-Spec Mint TDD HTML's `/forge` command does what plan mode should do:
+Spec Mint TDD HTML's forge workflow does what plan mode should do:
 
 - **Research depth**: Reads 10-20+ files, searches the web, pulls library docs, analyzes test infrastructure. Not a quick scan.
 - **Interviews**: Asks you targeted questions based on what it found — including testing preferences, isolation strategies, and coverage targets. Multiple rounds until there's no ambiguity.
@@ -460,12 +346,12 @@ Spec Mint TDD HTML's `/forge` command does what plan mode should do:
 
 Spec Mint TDD HTML reads your codebase and enforces red-green-refactor. [Kluris](https://kluris.io) gives your agents the *other* half — the tribal knowledge that never made it into comments: architecture decisions, test isolation conventions, flaky-test history, the "why" behind every weird choice.
 
-Pair them and `/forge` Phase 1b (research) stops guessing. It consults the brain first — so the test strategy lands aligned with how your team already does things.
+Pair them and the forge workflow's Phase 1b (research) stops guessing. It consults the brain first — so the test strategy lands aligned with how your team already does things.
 
 **Inside your AI coding agent:**
 
 ```text
-> /specmint-tdd-html:forge add OAuth sign-in with GitHub
+> forge add OAuth sign-in with GitHub
 ```
 
 Phase 1a reads the code and test infrastructure. Phase 1b queries the brain:

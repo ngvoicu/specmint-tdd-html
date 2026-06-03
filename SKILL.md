@@ -60,18 +60,11 @@ and the user's preference for tracked vs local-only spec state.
    session with the registry out of sync with the derived progress in
    `SPEC.html`. This is non-negotiable.
 
-## Claude Code Plugin
-
-If running as a Claude Code plugin, slash commands like `/specmint-tdd-html:forge`,
-`/specmint-tdd-html:resume`, `/specmint-tdd-html:pause` etc. are available. The
-`/forge` command replaces plan mode with deep research, iterative interviews,
-and spec writing.
-
 ## Coexistence with markdown specs
 
-This plugin only manages `.html` specs. If `.specs/<id>/SPEC.md` files exist
+This skill only manages `.html` specs. If `.specs/<id>/SPEC.md` files exist
 (from a markdown-flavored Spec Mint variant), they are not visible to or
-operated on by this plugin. No auto-conversion, no edits. **The user should
+operated on by this skill. No auto-conversion, no edits. **The user should
 use the markdown-flavored variant for those specs.**
 
 ## Session Start
@@ -90,7 +83,7 @@ instead of reading files. Otherwise, fall back to reading files manually:
 | Situation | Required behavior |
 |-----------|-------------------|
 | `.specs/registry.md` missing | If `.specs/` exists, report "No registry yet" and offer to initialize it. If `.specs/` is missing, report "No specs yet" and continue normally. |
-| `.specs/assets/` missing or stale when a SPEC.html is being written | Refresh it — copy `spec-styles.css` and `spec-runtime.js` from the plugin's `assets/` directory into `.specs/assets/`, **overwriting any existing files**. The runtime ships rendering fixes (Mermaid, diagram fullscreen modal, code highlighting, RGR-phase derivation) and must stay in sync with the plugin version. |
+| `.specs/assets/` missing or stale when a SPEC.html is being written | Refresh it — copy `spec-styles.css` and `spec-runtime.js` from the skill's bundled `assets/` directory into `.specs/assets/`, **overwriting any existing files**. The runtime ships rendering fixes (Mermaid, diagram fullscreen modal, code highlighting, RGR-phase derivation) and must stay in sync with the skill version. |
 | Malformed registry row | Skip malformed row, emit warning with row text, continue parsing remaining rows. |
 | Multiple `active` rows | Warn user. Pick the row with the newest `Updated` date (or first active row if dates are unavailable) for this run. On next write, normalize to a single active spec. |
 | Registry row exists but `.specs/<id>/SPEC.html` missing | Warn and continue. Keep row visible in list/status with `(SPEC.html missing)`. |
@@ -371,15 +364,6 @@ designed for durable technical decisions, not running scratchpad.
 5. Set target status to `active` in JSON metadata and in `.specs/registry.md`.
 6. Resume the target spec (full resume workflow).
 
-## Command Ownership Map
-
-- `SKILL.md`: global invariants, lifecycle rules, state authority, and conflict
-  handling, plus cross-tool OpenAPI behavior.
-- `commands/*.md` (Claude Code plugin only): command-specific entrypoints,
-  prompts, and output shapes.
-- If there is a conflict, preserve `Critical Invariants` from this file and
-  apply command-specific behavior only where it does not violate invariants.
-
 ## Spec Format (HTML — TDD)
 
 The detailed format reference lives in `references/spec-format.md`. The
@@ -395,7 +379,7 @@ testing reference is in `references/testing-knowledge.md`.
 
 - Each `SPEC.html` references `../assets/spec-styles.css` and
   `../assets/spec-runtime.js`. Those two files are shared by every spec
-  in the project and are refreshed from the plugin's `assets/` on every
+  in the project and are refreshed from the skill's bundled `assets/` on every
   forge (overwrite, not skip-if-present) so existing projects pick up
   runtime fixes.
 - Identity (`id`, `title`, `status`, `created`, `updated`, `priority`,
@@ -439,7 +423,7 @@ full forge workflow: setup, research deeply, interview the user, iterate
 until clear, then write the spec.
 
 **Plan mode:** In Claude Code, if the environment is in read-only plan mode,
-ask the user to exit plan mode (Shift+Tab) and rerun `/specmint-tdd-html:forge`.
+ask the user to exit plan mode (Shift+Tab) and start the forge workflow again.
 Other tools: proceed normally.
 
 **The forge workflow never produces application code.** Its outputs are only
@@ -457,13 +441,13 @@ Other tools: proceed normally.
    Do not proceed until the user chooses.
 3. Initialize directories: `mkdir -p .specs/<id> .specs/assets`
 4. **Refresh shared assets.** Copy `spec-styles.css` and `spec-runtime.js`
-   from the plugin's bundled `assets/` directory into `.specs/assets/`,
-   **overwriting any existing files**. The runtime is plugin-managed and
+   from the skill's bundled `assets/` directory into `.specs/assets/`,
+   **overwriting any existing files**. The runtime is skill-managed and
    never hand-edited — it ships rendering fixes (Mermaid initialization,
    click-to-fullscreen diagram modal with wheel-zoom + drag-pan, PrismJS
    code highlighting, RGR-phase derivation) that must stay in sync with
-   the plugin version. For Claude Code plugins this is typically
-   `~/.claude/plugins/specmint-tdd-html/assets/`.
+   the skill version. For skill installs it is typically the installed
+   skill's assets/ directory (e.g. `~/.claude/skills/specmint-tdd-html/assets/`).
 5. If `.specs/registry.md` doesn't exist, initialize it with the header row.
 
 ### Step 2: Deep Research
@@ -473,25 +457,26 @@ available resource so the spec won't need revision mid-build.
 
 Research runs on two parallel tracks:
 
-#### Track A: Researcher Agent
+#### Track A: Spawn a Research Subagent
 
-**In Claude Code:** Spawn the `specmint-tdd-html:researcher` agent (Task tool)
-for exhaustive parallel research. Provide: the user's request, spec ID,
-output path `.specs/<id>/research-01.md`, and any Context7 findings from
-Track B. The researcher maps the project architecture, reads 15-30 files,
-runs 3+ web searches, compares library candidates, assesses risks, and
-analyzes the full test infrastructure.
+**If the tool supports subagents:** Spawn a research subagent with the Task
+tool, using the brief in `references/researcher.md`, for exhaustive parallel
+research. Provide: the user's request, spec ID, output path
+`.specs/<id>/research-01.md`, and any Context7 findings from Track B. The
+research subagent maps the project architecture, reads 15-30 files, runs 3+
+web searches, compares library candidates, assesses risks, and analyzes the
+full test infrastructure.
 
-**In other tools (Cursor, Windsurf, Codex, Cline, Gemini):** Agent spawning
-is not available. Perform the research inline yourself — scan the project
-structure, read relevant files (15-30 for non-trivial features), search
-the web for best practices and library comparisons, and analyze the existing
-test infrastructure (frameworks, runners, mocking patterns, testcontainers,
-coverage tools). Save findings to `.specs/<id>/research-01.md`.
+**If subagents are not available:** Perform the research inline yourself —
+scan the project structure, read relevant files (15-30 for non-trivial
+features), search the web for best practices and library comparisons, and
+analyze the existing test infrastructure (frameworks, runners, mocking
+patterns, testcontainers, coverage tools). Save findings to
+`.specs/<id>/research-01.md`.
 
 #### Track B: Context7 & Cross-Skill Research (in parallel)
 
-While the researcher runs (or between inline research steps):
+While the research subagent runs (or between inline research steps):
 
 - **Context7**: If available, pull up-to-date documentation for 2-5 key
   libraries. Check API changes, deprecated features, and recommended patterns.
@@ -703,7 +688,7 @@ The spec must include:
     change that captures a design decision
   - One canonical test per new test pattern — the shape, not every
     test body (the full body lives in the TEST task itself during
-    `/implement`, not in the forged spec)
+    implementation, not in the forged spec)
 
   **Skip:** boilerplate (imports, scaffolding, route registration
   already implied by phases); repeated identical patterns (show one,
@@ -800,8 +785,6 @@ scan the codebase for API routes, schemas, and security config. Write
 reusable `$ref` schemas, and accurate parameters/responses/security. Write
 per-endpoint docs under `.openapi/endpoints/{method}-{path-slug}.md`.
 Preserve manual additions when updating existing files. Report totals.
-
-Plugin users: see `commands/openapi.md` for the full phase-by-phase workflow.
 
 ## Before Session Ends
 
@@ -905,7 +888,7 @@ This is irreversible — consider archiving instead.
 `SPEC.html` is plain HTML with a JSON metadata blob. Any tool that can
 read and write files can use these specs:
 
-- **Claude Code**: Full plugin support or skill via `npx skills add`
+- **Claude Code**: Skill via `npx skills add` (auto-triggers on natural language)
 - **Codex**: Snippet in AGENTS.md or skill via `npx skills add`
 - **Cursor / Windsurf / Cline**: Snippet in rules file
 - **Gemini CLI**: Snippet in GEMINI.md

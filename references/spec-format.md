@@ -6,7 +6,7 @@ The empty template is in `html-template.html`; surgical edit operations are in `
 
 ## File layout
 
-Every project that uses this plugin has a `.specs/` directory at the project root:
+Every project that uses this skill has a `.specs/` directory at the project root:
 
 ```
 .specs/
@@ -22,7 +22,7 @@ Every project that uses this plugin has a `.specs/` directory at the project roo
                                #   attempt dumps). Never authoritative.
 ```
 
-The `.specs/assets/` directory is shared by every spec. AI never hand-edits these — they are the design system, copied from the plugin's `assets/` on every forge so existing projects pick up runtime fixes.
+The `.specs/assets/` directory is shared by every spec. AI never hand-edits these — they are the design system, copied from the skill's `assets/` on every forge so existing projects pick up runtime fixes.
 
 The per-spec `artifacts/` subdirectory is **optional**: only create it when the AI tool needs to persist scratch files (e.g., test-run logs the tool can't carry across turns in memory). Files inside `artifacts/` are never read back as authoritative — the spec's TDD Log section, Decision Log, and research-/interview notes are the durable record. Don't write scratch files anywhere else under `.specs/<id>/`.
 

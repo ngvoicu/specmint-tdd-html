@@ -1,16 +1,14 @@
 # Repository Guidelines
 
-Codex-style guidelines for agents working on Spec Mint TDD HTML. The plugin's full project context is in `CLAUDE.md`; this file is the contributor / agent-style guide.
+Codex-style guidelines for agents working on Spec Mint TDD HTML. The skill's full project context is in `CLAUDE.md`; this file is the contributor / agent-style guide.
 
 For architectural context across the Mint family (core vs TDD, distribution, evals), read and write to the **ngvoicu-sme** brain through kluris — `/kluris-ngvoicu-sme` (Claude Code skill: search, learn, remember, create) or `kluris search "<query>" --brain ngvoicu-sme` (CLI). Never edit brain files by hand.
 
 ## Project Structure & Module Organization
 
-- `.claude-plugin/`: plugin metadata for Claude Code distribution (`plugin.json`, `marketplace.json`).
-- `.cursor-plugin/`: plugin metadata for Cursor distribution.
-- `commands/`: one Markdown file per slash command (`forge.md`, `implement.md`, `resume.md`, `pause.md`, `switch.md`, `list.md`, `status.md`, `openapi.md`). Each file is the behavioral contract for that command.
-- `agents/researcher.md`: subagent prompt for deep codebase + test infrastructure research (Opus model).
+- `SKILL.md`: the universal skill — the single self-contained entrypoint defining the full forge/implement/resume/pause/switch/list/status/openapi workflow.
 - `references/`:
+  - `researcher.md` — deep-research subagent brief (codebase + test infrastructure analysis), spawned via the Task tool during forge as described in `SKILL.md`.
   - `spec-format.md` — canonical `SPEC.html` format reference (TDD-aware: Testing Architecture, `data-tdd-phase`, TDD Log swimlane).
   - `html-template.html` — empty canonical template AI seeds from.
   - `edit-recipes.md` — before/after snippets for every surgical edit, including TDD-specific recipes (`data-tdd-phase` swaps, append TDD Log entry, add TEST-IMPL pair).
@@ -30,7 +28,7 @@ For architectural context across the Mint family (core vs TDD, distribution, eva
 ## Build, Test, and Development Commands
 
 - `rg --files`: fast inventory of repository files before editing.
-- `sed -n '1,160p' commands/forge.md`: inspect command content in the terminal.
+- `sed -n '1,160p' SKILL.md`: inspect workflow content in the terminal.
 - `python3 -m http.server 8000` (run inside a consumer project's `.specs/<id>/`): serve a real generated `SPEC.html` at <http://localhost:8000/SPEC.html> to eyeball visual changes — especially the TDD swimlane log and TEST-IMPL pair cards. The reference render lives at <https://specmint.io/#gallery>.
 - `python3 -c "import re,json,sys; p=sys.argv[1]; h=open(p).read(); m=re.search(r'<script[^>]*id=\"spec-meta\"[^>]*>(.+?)</script>',h,re.S); json.loads(m.group(1)); o=re.findall(r'<!--\\s*region:([\\w-]+)\\s*-->',h); c=re.findall(r'<!--\\s*endregion:([\\w-]+)\\s*-->',h); assert sorted(o)==sorted(c); print('OK')" path/to/SPEC.html`: validate a generated SPEC.html (full recipe in `references/validate.md`).
 - `npx skills add ngvoicu/specmint-tdd-html -a codex`: smoke-test universal-skill installation flow.
@@ -40,9 +38,9 @@ This repository has no compile/build pipeline; Markdown, JSON, HTML, CSS, and JS
 
 ## Coding Style & Naming Conventions
 
-- Plugin source (commands, references, SKILL.md, README.md): ASCII Markdown / JSON with concise, imperative instructions.
-- Use lowercase, hyphenated filenames for command docs (for example `commands/openapi.md`).
-- Keep command docs procedural (numbered steps, explicit file paths, deterministic behavior).
+- Skill source (SKILL.md, references, README.md): ASCII Markdown with concise, imperative instructions.
+- Use lowercase, hyphenated filenames for reference docs (for example `references/spec-format.md`).
+- Keep workflow docs procedural (numbered steps, explicit file paths, deterministic behavior).
 - Spec naming:
   - Spec IDs are lowercase-hyphenated (`user-auth-system`, `rate-limit-middleware`).
   - Task codes are `[TEST-PREFIX-NN]` and `[IMPL-PREFIX-NN]` with continuous numbering across all phases.
@@ -68,10 +66,9 @@ This repository has no compile/build pipeline; Markdown, JSON, HTML, CSS, and JS
 - No automated test suite currently exists in this repository.
 - Perform manual validation for each change:
   - Run the validate recipe on a generated `.specs/<id>/SPEC.html` after any format change.
-  - Verify `.claude-plugin/*.json` and `.cursor-plugin/*.json` stay valid JSON.
   - Confirm referenced paths/files exist.
-  - Dogfood the plugin in a disposable consumer project after any visual change and open the generated `SPEC.html` in a browser — pay special attention to the TDD swimlane and TEST-IMPL pair card rendering.
-  - Smoke-test install/use flow in a disposable project (with a real test runner available so the implement RGR gates can fire).
+  - Install the skill into a disposable consumer project after any visual change (e.g. `npx skills add ./. -g -a claude-code`, or copy `SKILL.md` into its skills dir) and open the generated `SPEC.html` in a browser — pay special attention to the TDD swimlane and TEST-IMPL pair card rendering.
+  - Smoke-test the install/use flow in a disposable project by exercising the natural-language triggers (forge / resume / implement) with a real test runner available so the implement RGR gates can fire.
 - If you change spec-format rules, update `SKILL.md`, `references/spec-format.md`, and `references/edit-recipes.md` in the same PR.
 - `evals/evals.json`: 6 real eval scenarios with 33 verifiable expectations (tracked). Run via `/skill-creator improve` in a fresh Claude Code session; run outputs land in `specmint-tdd-html-workspace/` (gitignored).
 
@@ -79,4 +76,4 @@ This repository has no compile/build pipeline; Markdown, JSON, HTML, CSS, and JS
 
 - Prefer descriptive, scoped commit messages (for example `feat: add data-tdd-phase derivation to spec-runtime.js`).
 - PRs should include purpose, affected files, behavior changes (before/after HTML or test output snippets when relevant), and linked issue/context when available.
-- Don't span sub-repos in a single commit — keep changes scoped to this plugin.
+- Don't span sub-repos in a single commit — keep changes scoped to this skill.
