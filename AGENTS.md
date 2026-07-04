@@ -31,7 +31,7 @@ For architectural context across the Mint family (core vs TDD, distribution, eva
 - `sed -n '1,160p' SKILL.md`: inspect workflow content in the terminal.
 - `python3 -m http.server 8000` (run inside a consumer project's `.specs/<id>/`): serve a real generated `SPEC.html` at <http://localhost:8000/SPEC.html> to eyeball visual changes — especially the TDD swimlane log and TEST-IMPL pair cards. The reference render lives at <https://specmint.io/#gallery>.
 - `python3 -c "import re,json,sys; p=sys.argv[1]; h=open(p).read(); m=re.search(r'<script[^>]*id=\"spec-meta\"[^>]*>(.+?)</script>',h,re.S); json.loads(m.group(1)); o=re.findall(r'<!--\\s*region:([\\w-]+)\\s*-->',h); c=re.findall(r'<!--\\s*endregion:([\\w-]+)\\s*-->',h); assert sorted(o)==sorted(c); print('OK')" path/to/SPEC.html`: validate a generated SPEC.html (full recipe in `references/validate.md`).
-- `npx skills add ngvoicu/specmint-tdd-html -a codex`: smoke-test universal-skill installation flow.
+- `npx skills add ngvoicu/specmint-tdd-html -g -a codex`: smoke-test universal-skill installation flow.
 - `git log --oneline -n 10`: review recent commit style before committing.
 
 This repository has no compile/build pipeline; Markdown, JSON, HTML, CSS, and JS are consumed directly by host tools or the browser.
