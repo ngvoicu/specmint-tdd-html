@@ -8,7 +8,7 @@ Spec Mint TDD HTML enforces strict TDD in AI coding workflows. Every task starts
 
 Works with Claude Code, Codex, Cursor, Windsurf, Cline, Gemini CLI, and any AI coding tool that can read files — installed as a universal skill.
 
-**[→ See a rendered SPEC.html](https://specmint.io/#gallery)** on specmint.io — Rate Limit Middleware exemplar with paired TEST-IMPL task cards, RGR swimlane TDD Log, and the full Testing Architecture section.
+**[→ See a rendered SPEC.html](https://specmint.ngvoicu.dev/#gallery)** on specmint.ngvoicu.dev — Rate Limit Middleware exemplar with paired TEST-IMPL task cards, RGR swimlane TDD Log, and the full Testing Architecture section.
 
 ## The Problem
 

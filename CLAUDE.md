@@ -30,7 +30,7 @@ Topics relevant to this repo: specmint-tdd-html overview, TDD invariants, distri
 
 The skill has two conceptual layers:
 
-**Skill layer** (this repo) — `SKILL.md` (the universal skill, including the full forge/implement/resume workflow), `references/*` (format reference + edit recipes + validator + testing-knowledge + mockup libraries + `researcher.md` deep-research subagent brief), `assets/*` (shared `spec-styles.css` + `spec-runtime.js` copied into consuming projects). The rendered preview lives at <https://specmint.io/#gallery>.
+**Skill layer** (this repo) — `SKILL.md` (the universal skill, including the full forge/implement/resume workflow), `references/*` (format reference + edit recipes + validator + testing-knowledge + mockup libraries + `researcher.md` deep-research subagent brief), `assets/*` (shared `spec-styles.css` + `spec-runtime.js` copied into consuming projects). The rendered preview lives at <https://specmint.ngvoicu.dev/#gallery>.
 
 **Data layer** (consuming project) — `.specs/` directory created in the consuming project root (not here). Layout:
 
@@ -93,7 +93,7 @@ The skill has two conceptual layers:
 - Edit `references/testing-knowledge.md` to update testing framework / tooling guidance.
 
 ### Format changes
-- Edit `assets/spec-styles.css` / `assets/spec-runtime.js` to change rendered visual / runtime behavior for every generated `SPEC.html`. To eyeball changes, install the skill into a disposable consumer project (e.g. `npx skills add ./. -g -a claude-code`, or copy `SKILL.md` into its skills dir), exercise the forge trigger in natural language, then open the generated `.specs/<id>/SPEC.html`. The reference render lives at <https://specmint.io/#gallery>.
+- Edit `assets/spec-styles.css` / `assets/spec-runtime.js` to change rendered visual / runtime behavior for every generated `SPEC.html`. To eyeball changes, install the skill into a disposable consumer project (e.g. `npx skills add ./. -g -a claude-code`, or copy `SKILL.md` into its skills dir), exercise the forge trigger in natural language, then open the generated `.specs/<id>/SPEC.html`. The reference render lives at <https://specmint.ngvoicu.dev/#gallery>.
 - After any spec-format change, run the validate recipe on a generated `SPEC.html` (see `references/validate.md`).
 
 ### Plumbing
